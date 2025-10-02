@@ -2,7 +2,6 @@
 // Fonte: Open‑Meteo Forecast API (sem chave)
 
 const el = (id) => document.getElementById(id);
-const statusEl = el('status');
 const form = el('search-form');
 const queryInput = el('query');
 const btnGeoloc = el('btn-geoloc');
@@ -20,9 +19,25 @@ const wind = el('wind');
 const tz = el('tz');
 const hourlyJson = el('hourly-json');
 
+let toastTimer;
 function setStatus(msg) {
-  statusEl.textContent = msg || '';
-  if (msg) console.log('[status]', msg);
+  const toast = el('toast');
+  if (!toast) return;
+  if (toastTimer) clearTimeout(toastTimer);
+
+  toast.textContent = msg || '';
+  if (msg) {
+    console.log('[status]', msg);
+    toast.classList.add('show');
+    // Automatically hide after a delay, unless it's a persistent "loading" message
+    if (!msg.includes('Buscando') && !msg.includes('Solicitando')) {
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 4000); // Hide after 4 seconds
+    }
+  } else {
+    toast.classList.remove('show');
+  }
 }
 
 function showResult(show) {
@@ -260,7 +275,9 @@ function renderWeek(week) {
     const card = document.createElement('div');
     card.className = 'day-card';
     const emoji = d.rainy ? (d.pop >= 70 || d.mm >= 5 ? '🌧️' : '🌦️') : '🌤️';
+    const indicator = d.pop >= 75 ? '<div class="rain-indicator"></div>' : '';
     card.innerHTML = `
+      ${indicator}
       <div class="dow">${d.dow}</div>
       <div class="date">${formatDayMonth(d.date)}</div>
       <div class="emoji">${emoji}</div>
