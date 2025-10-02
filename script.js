@@ -462,14 +462,16 @@ function initBuiltInTour(){
 
   const makeSteps = () => {
     const steps = [];
-    steps.push({ element: null, text: 'Bem-vindo! Este guia explica cada parte do app.' });
-    if (qs('#query')) steps.push({ element: '#query', text: 'Digite uma cidade. As sugestões aparecem automaticamente.' });
-    if (qs('#btn-geoloc')) steps.push({ element: '#btn-geoloc', text: 'Use sua localização para buscar automaticamente.' });
-    if (qs('#status')) steps.push({ element: '#status', text: 'Aqui aparecem mensagens de status e erros.' });
-    if (qs('#result')) steps.push({ element: '#result', text: 'Resposta “vai chover?”, temperatura, vento e detalhes.' });
-    if (qs('details')) steps.push({ element: 'details', text: 'Expanda para ver um resumo horário.', onShow: () => { const d = qs('details'); if (d) d.open = true; } });
-    if (qs('#week-summary')) steps.push({ element: '#week-summary', text: 'Resumo da semana: dias com chuva e veredito.' });
-    if (qs('#week-grid')) steps.push({ element: '#week-grid', text: 'Cartões diários: mm, probabilidade (se houver) e mín/máx.' });
+    if (qs('.guide-btn')) steps.push({ element: '.guide-btn', text: 'O botão "Guia interativo" fica sempre aqui. Clique novamente quando quiser rever o passo a passo.' });
+    if (qs('#query')) steps.push({ element: '#query', text: 'Pesquise uma cidade ou endereço. O autocomplete sugere resultados conforme você digita.' });
+    if (qs('#btn-geoloc')) steps.push({ element: '#btn-geoloc', text: 'Prefere rapidez? Use sua localização atual (o navegador vai pedir permissão).' });
+    if (qs('#status')) steps.push({ element: '#status', text: 'A linha de status indica carregamento, erros e dicas durante a busca.' });
+    if (qs('#result')) steps.push({ element: '#result', text: 'Aqui está a resposta “vai chover?”, além da temperatura, vento e acumulados das próximas horas.' });
+    if (qs('details')) steps.push({ element: 'details', text: 'Abra "Ver detalhes horários" para inspecionar o JSON bruto com todos os horários.', onShow: () => { const d = qs('details'); if (d) d.open = true; } });
+    if (qs('#week-summary')) steps.push({ element: '#week-summary', text: 'O resumo semanal conta quantos dias têm chuva e entrega o veredito da semana.' });
+    if (qs('#week-theme-label')) steps.push({ element: '#week-theme-label', text: 'Este rótulo mostra o tema visual aplicado conforme o clima predominante.' });
+    if (qs('#week-grid')) steps.push({ element: '#week-grid', text: 'Cada cartão diário traz emoji de tempo, precipitação, probabilidade e barra de confiança.' });
+    if (qs('.footer-surface')) steps.push({ element: '.footer-surface', text: 'No rodapé você encontra links das APIs, dicas rápidas e badges sobre a proposta do app.' });
     return steps.filter(s => !s.element || qs(s.element));
   };
 
@@ -492,99 +494,7 @@ function initBuiltInTour(){
       if (!el){ next(); return; }
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       if (typeof step.onShow === 'function') step.onShow();
-      // aguardar um frame para garantir layout após scroll
       requestAnimationFrame(() => positionAround(el));
-    }
-    btnPrev.style.display = idx === 0 ? 'none' : 'inline-block';
-    btnNext.textContent = idx === steps.length - 1 ? 'Concluir' : 'Próximo';
-  }
-  function next(){ go(idx + 1); }
-  function prev(){ go(idx - 1); }
-  function end(){ hideEl(overlay); hideEl(stage); hideEl(pop); idx = -1; }
-
-  btnPrev.addEventListener('click', prev);
-  btnNext.addEventListener('click', () => { if (idx === steps.length - 1) end(); else next(); });
-  btnClose.addEventListener('click', end);
-
-  btn.addEventListener('click', () => {
-    console.log('[tour] button click (built-in)');
-    const start = () => {
-      showResult(true);
-      steps = makeSteps();
-      console.log('[tour] steps built (built-in):', steps.map(s => s.element || '(intro)'));
-      if (!steps.length) { alert('Nada para mostrar no guia agora.'); return; }
-      go(0);
-    };
-    start();
-  });
-}
-
-// === Built-in tour (no external lib) ===
-function initBuiltInTour(){
-  const btn = document.getElementById('btn-tour');
-  if (!btn) return;
-
-  // elements
-  const overlay = document.createElement('div'); overlay.className = 'tour-overlay';
-  const stage = document.createElement('div'); stage.className = 'tour-stage';
-  const pop = document.createElement('div'); pop.className = 'tour-popover';
-  const popText = document.createElement('div'); popText.className = 'tour-text';
-  const actions = document.createElement('div'); actions.className = 'tour-actions';
-  const btnPrev = document.createElement('button'); btnPrev.className = 'tour-btn secondary'; btnPrev.textContent = 'Anterior';
-  const btnNext = document.createElement('button'); btnNext.className = 'tour-btn'; btnNext.textContent = 'Próximo';
-  const btnClose = document.createElement('button'); btnClose.className = 'tour-btn secondary'; btnClose.textContent = 'Fechar';
-  actions.append(btnPrev, btnNext, btnClose);
-  pop.append(popText, actions);
-  document.body.append(overlay, stage, pop);
-
-  function qs(sel){ return document.querySelector(sel); }
-  function rect(el){ const r = el.getBoundingClientRect(); return { top: r.top + window.scrollY, left: r.left + window.scrollX, width: r.width, height: r.height }; }
-  function showEl(el){ el.style.display = 'block'; }
-  function hideEl(el){ el.style.display = 'none'; }
-  function positionAround(el){
-    const { top, left, width, height } = rect(el);
-    const pad = 8;
-    stage.style.top = `${top - pad}px`;
-    stage.style.left = `${left - pad}px`;
-    stage.style.width = `${width + pad*2}px`;
-    stage.style.height = `${height + pad*2}px`;
-    pop.style.top = `${top + height + 12}px`;
-    pop.style.left = `${left}px`;
-  }
-
-  const makeSteps = () => {
-    const steps = [];
-    steps.push({ element: null, text: 'Bem-vindo! Este guia explica cada parte do app.' });
-    if (qs('#query')) steps.push({ element: '#query', text: 'Digite uma cidade. Sugestões aparecem automaticamente.' });
-    if (qs('#btn-geoloc')) steps.push({ element: '#btn-geoloc', text: 'Use sua localização para buscar automaticamente.' });
-    if (qs('#status')) steps.push({ element: '#status', text: 'Aqui aparecem mensagens de status e erros.' });
-    if (qs('#result')) steps.push({ element: '#result', text: 'Resposta “vai chover?”, temperatura, vento e detalhes.' });
-    if (qs('details')) steps.push({ element: 'details', text: 'Expanda para ver um resumo horário.', onShow: () => { const d = qs('details'); if (d) d.open = true; } });
-    if (qs('#week-summary')) steps.push({ element: '#week-summary', text: 'Resumo da semana: dias com chuva e veredito.' });
-    if (qs('#week-grid')) steps.push({ element: '#week-grid', text: 'Cartões diários: mm, probabilidade (se houver) e mín/máx.' });
-    return steps.filter(s => !s.element || qs(s.element));
-  };
-
-  let steps = [];
-  let idx = -1;
-  function go(i){
-    idx = i;
-    if (idx < 0) idx = 0;
-    if (idx >= steps.length) { end(); return; }
-    const step = steps[idx];
-    showEl(overlay); showEl(pop);
-    popText.textContent = step.text || '';
-    if (!step.element){
-      hideEl(stage);
-      pop.style.top = `${window.scrollY + 80}px`;
-      pop.style.left = `24px`;
-    } else {
-      showEl(stage);
-      const el = qs(step.element);
-      if (!el){ next(); return; }
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      if (typeof step.onShow === 'function') step.onShow();
-      positionAround(el);
     }
     btnPrev.style.display = idx === 0 ? 'none' : 'inline-block';
     btnNext.textContent = idx === steps.length - 1 ? 'Concluir' : 'Próximo';

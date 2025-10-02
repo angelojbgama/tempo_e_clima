@@ -12,8 +12,14 @@
     <header class="container">
       <h1>Vai chover?</h1>
       <p class="subtitle">Previsão simples usando Open‑Meteo (sem API key)</p>
-      <div>
-        <button id="btn-tour" class="secondary" type="button">Guia</button>
+      <div class="header-actions">
+        <button id="btn-tour" class="guide-btn" type="button" aria-describedby="guide-btn-desc">
+          <span class="guide-icon" aria-hidden="true">✨</span>
+          <span class="guide-content">
+            <span class="guide-title">Guia interativo</span>
+            <span id="guide-btn-desc" class="guide-subtitle">Passe pelos recursos passo a passo</span>
+          </span>
+        </button>
       </div>
     </header>
 
@@ -60,10 +66,45 @@
       </section>
     </main>
 
-    <footer class="container tiny muted">
-      <p>
-        APIs alternativas: MET Norway, OpenWeather, NASA POWER, Meteostat. Este app usa apenas Open‑Meteo.
-      </p>
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-surface">
+          <div class="footer-grid">
+            <div class="footer-brand">
+              <p class="footer-kicker">Vai chover?</p>
+              <h2 class="footer-title">Tempo &amp; Clima</h2>
+              <p class="footer-text">
+                Previsão transparente para decidir rápido se leva guarda-chuva: dados atuais, próximos horários e um panorama da semana em segundos.
+              </p>
+              <div class="footer-tags">
+                <span class="footer-tag">Open‑Meteo</span>
+                <span class="footer-tag">100% client-side</span>
+                <span class="footer-tag">Sem API key</span>
+              </div>
+            </div>
+            <div class="footer-column">
+              <h3>Dados &amp; APIs</h3>
+              <ul class="footer-list">
+                <li><a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Forecast Open‑Meteo</a></li>
+                <li><a href="https://open-meteo.com/en/docs/geocoding-api" target="_blank" rel="noreferrer">Geocoding Open‑Meteo</a></li>
+                <li><a href="https://open-meteo.com/en/docs" target="_blank" rel="noreferrer">Documentação &amp; limites</a></li>
+              </ul>
+            </div>
+            <div class="footer-column">
+              <h3>Dicas rápidas</h3>
+              <ul class="footer-list">
+                <li>Use o botão <strong>Guia</strong> para um tour guiado da interface.</li>
+                <li>Abra "Ver detalhes horários" para inspecionar os dados brutos.</li>
+                <li>Confira a confiança diária antes de planejar atividades externas.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="footer-bottom tiny">
+            <span>Fonte primária: Open‑Meteo Forecast &amp; Geocoding.</span>
+            <span>Atualize a qualquer momento buscando uma nova localização.</span>
+          </div>
+        </div>
+      </div>
     </footer>
 
     <script src="script.js"></script>

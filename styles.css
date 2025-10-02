@@ -24,6 +24,52 @@ body {
 header h1 { margin: 0 0 6px; font-size: 32px; }
 .subtitle { margin: 0; color: var(--muted); }
 header .secondary { margin-top: 10px; }
+.header-actions { margin-top: 16px; }
+.guide-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: linear-gradient(140deg, rgba(255,255,255,0.12), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text);
+  box-shadow: 0 14px 24px rgba(0,0,0,0.24);
+  text-align: left;
+  line-height: 1.3;
+  transition: transform 120ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+.guide-btn:hover,
+.guide-btn:focus {
+  background: linear-gradient(140deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06));
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: 0 16px 28px rgba(0,0,0,0.28);
+}
+.guide-btn:active {
+  transform: translateY(1px);
+}
+.guide-btn:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 3px;
+}
+.guide-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+.guide-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.guide-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.guide-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+}
 
 .card {
   background: var(--card-bg);
@@ -155,6 +201,16 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 @media (max-width: 880px) { .week-grid { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width: 560px) { .week-grid { grid-template-columns: repeat(2, 1fr); } }
 
+@media (max-width: 640px) {
+  .guide-btn {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .header-actions {
+    margin-top: 20px;
+  }
+}
+
 /* (tour removido) */
 /* Simple built-in tour */
 .tour-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 9998; display: none; }
@@ -178,3 +234,130 @@ body.week-bg-3 { --bg-gradient-secondary: linear-gradient(170deg, rgba(70,110,20
 .search-row button { padding: 12px 20px; height: 100%; }
 .actions-row { display: flex; gap: 10px; align-items: center; }
 .actions-row button { padding: 10px 14px; min-width: 44px; }
+
+/* Footer */
+.footer {
+  margin-top: 64px;
+  padding: 0 0 48px;
+  color: var(--muted);
+}
+.footer-surface {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+}
+.footer-grid {
+  display: grid;
+  gap: 32px;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 1.2fr);
+  align-items: flex-start;
+}
+.footer-brand { color: var(--muted); }
+.footer-kicker {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.footer-title {
+  margin: 6px 0 12px;
+  font-size: 26px;
+  line-height: 1.1;
+  color: var(--text);
+}
+.footer-text {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.footer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.footer-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1;
+}
+.footer-column h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.footer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.footer-list li {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.footer-list a {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.footer-list a:hover,
+.footer-list a:focus {
+  color: var(--accent-2);
+  text-decoration: underline;
+}
+.footer-bottom {
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  justify-content: space-between;
+  color: var(--muted);
+}
+.footer-bottom span {
+  font-size: 12px;
+}
+
+@media (max-width: 880px) {
+  .footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .footer {
+    margin-top: 48px;
+  }
+  .footer-surface {
+    padding: 24px;
+  }
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .footer-bottom {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+}
