@@ -1,0 +1,51 @@
+@startuml VaiChoverApp
+title Fluxo do App "Vai chover?" (Client-side)
+
+actor Usuario as U
+boundary Navegador as B
+control App as A
+collections OpenMeteo as OM
+
+U -> B : Digita cidade / clica geolocalização
+B -> A : eventos (input, submit, geoloc)
+
+A -> OM : Geocoding(name)
+OM --> A : Lista de lugares (top 5)
+A -> B : Render dropdown de sugestões
+U -> B : Seleciona sugestão (ou Enter)
+
+A -> OM : Forecast(lat, lon, current, hourly, daily, tz=auto)
+OM --> A : JSON previsão (current/hourly/daily)
+
+A -> A : Heurística curto prazo
+note right
+sum6 = soma precipitação 6h
+prob24 = max(prob 24h)
+Regras:
+- sum6 >= 1 mm ou prob24 >= 70% => Vai chover
+- prob24 >= 40% ou sum6 > 0 => Pode chover
+- senão => Não deve chover
+end note
+
+A -> A : Heurística semanal
+note right
+Por dia:
+mm = precipitation_sum
+pop = precipitation_probability_max
+Dia chuvoso se mm >= 2 ou pop >= 60
+Resumo semanal por nº de dias chuvosos
+end note
+
+A -> A : Definir tema visual
+note right
+applyWeeklyMood -> define classes theme-week-*
+week-bg-0..3 -> gradientes conforme nº de dias chuvosos
+applyTheme -> usa dados atuais para short-term (clear-day/night/rain)
+Tokens em themes-week.css controlam cards/inputs/botões
+end note
+
+A -> B : Render UI (agora + semana)
+
+U <-- B : Respostas e visualizações
+
+@enduml

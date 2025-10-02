@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vai chover? — Tempo & Clima</title>
+    <link rel="preconnect" href="https://api.open-meteo.com" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="themes-week.css" />
+  </head>
+  <body>
+    <header class="container">
+      <h1>Vai chover?</h1>
+      <p class="subtitle">Previsão simples usando Open‑Meteo (sem API key)</p>
+      <div>
+        <button id="btn-tour" class="secondary" type="button">Guia</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="card card-search">
+        <form id="search-form" class="row-gap">
+          <div class="search-row">
+            <div class="auto">
+              <input id="query" type="text" placeholder="Cidade ou endereço (ex: São Paulo)" aria-label="Cidade ou endereço" autocomplete="off" />
+              <ul id="suggestions" class="suggestions hidden" role="listbox" aria-label="Sugestões de lugares"></ul>
+            </div>
+            <button type="submit" class="primary-btn">Buscar</button>
+            <button id="btn-geoloc" type="button" class="secondary emoji-btn" aria-label="Usar minha localização">📍</button>
+            <span id="status" class="status-line" role="status" aria-live="polite"></span>
+          </div>
+        </form>
+      </section>
+
+      <section id="result" class="card hidden" aria-live="polite">
+        <h2 id="location-name">—</h2>
+        <div class="result-grid">
+          <div>
+            <div class="big" id="rain-emoji">☁️</div>
+            <div class="headline" id="rain-answer">Calculando…</div>
+            <div class="muted" id="rain-detail">—</div>
+          </div>
+          <div class="facts">
+            <div><span>Temp. agora:</span> <strong id="temp-now">—</strong></div>
+            <div><span>Chuva nas próximas 6h:</span> <strong id="rain-6h">—</strong></div>
+            <div><span>Prob. de chuva (próx. 24h):</span> <strong id="pop-24h">—</strong></div>
+            <div><span>Vento:</span> <strong id="wind">—</strong></div>
+            <div class="muted tiny" id="meta">Fonte: Open‑Meteo • Timezone: <span id="tz">—</span></div>
+          </div>
+        </div>
+        <details class="tiny">
+          <summary>Ver detalhes horários</summary>
+          <pre id="hourly-json" class="pre"></pre>
+        </details>
+        <hr/>
+        <h3>Nesta semana</h3>
+        <div id="week-summary" class="headline">—</div>
+        <div id="week-theme-label" class="tiny muted">Tema: —</div>
+        <div id="week-grid" class="week-grid"></div>
+      </section>
+    </main>
+
+    <footer class="container tiny muted">
+      <p>
+        APIs alternativas: MET Norway, OpenWeather, NASA POWER, Meteostat. Este app usa apenas Open‑Meteo.
+      </p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+  </html>

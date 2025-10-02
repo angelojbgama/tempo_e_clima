@@ -1,0 +1,135 @@
+/* Theming for weekly climate and short-term states */
+
+/* Palette design tokens (site-wide consumers in styles.css) */
+:root {
+  /* base */
+  --bg: #0b1020;           /* page background */
+  --text: #e8ebff;         /* default text */
+  --muted: #a8b0d9;        /* secondary text */
+
+  /* card */
+  --card-bg: rgba(18,24,51,0.6);
+  --card-border: rgba(38,48,102,0.65);
+  --card-shadow: 0 16px 32px rgba(6,12,32,0.32);
+
+  /* inputs */
+  --input-bg: rgba(14,19,48,0.72);
+  --input-border: rgba(44,56,111,0.7);
+  --input-text: var(--text);
+
+  /* buttons */
+  --btn-bg: #6aa9ff;
+  --btn-bg2: #407bf2;
+  --btn-text: #ffffff;
+  --btn-secondary-bg: #223067;
+  --btn-secondary-border: #31407a;
+  --btn-secondary-text: var(--text);
+
+  /* chips/bars */
+  --chip-bg: rgba(255,255,255,.02);
+  --chip-border: rgba(255,255,255,.06);
+  --bar-bg: #223067;
+  --bar-fill-start: #ffd36a;
+  --bar-fill-end: #5ee2a0;
+}
+
+/* Short-term themes (only active when week is dry) */
+body.theme-clear-day {
+  /* base alegre e clara */
+  --bg: #e9f7ff;           /* fundo azul clarinho com toque de ciano */
+  --text: #0c2a5a;         /* azul profundo, excelente contraste */
+  --muted: #5a78a3;        /* azul médio para textos secundários */
+
+  /* cards claros e leves */
+  --card-bg:rgba(255,255,255,0.68);       /* branco translúcido */
+  --card-border:rgba(230,238,249,0.65);   /* borda azul suave */
+  --card-shadow:0 18px 36px rgba(63, 160, 255, 0.18); /* sombra luminosa */
+
+  /* inputs claros */
+  --input-bg:rgba(255,255,255,0.82);
+  --input-border:rgba(219,232,249,0.85);
+  --input-text:#0c2a5a;
+
+  /* botões vibrantes (gradiente claro -> vivo) */
+  --btn-bg:#7fd0ff;        /* topo: azul-ciano claro */
+  --btn-bg2:#3fa0ff;       /* base: azul vivo */
+  --btn-text:#ffffff;
+  --btn-secondary-bg:rgba(243,248,255,0.82);     /* quase branco */
+  --btn-secondary-border:rgba(219,232,249,0.85); /* borda suave */
+  --btn-secondary-text:#0c2a5a;
+
+  /* chips e barras harmonizadas */
+  --chip-bg:rgba(247,251,255,0.62);       /* quase branco */
+  --chip-border:rgba(231,240,251,0.65);
+  --bar-bg:rgba(214,232,255,0.65);        /* azul claro */
+  --bar-fill-start:#ffd36a;/* amarelo ensolarado */
+  --bar-fill-end:#5ee2a0;  /* verde menta suave */
+}
+
+body.theme-cloudy {
+  /* base suave, tons frios */
+  --bg:#eaf0f6; --text:#152238; --muted:#5b6c85;
+
+  --card-bg:rgba(255,255,255,0.64); --card-border:rgba(221,229,239,0.65); --card-shadow:0 14px 28px rgba(21, 34, 56, 0.1);
+
+  --input-bg:rgba(255,255,255,0.78); --input-border:rgba(211,222,235,0.75); --input-text:#152238;
+
+  --btn-bg:#8abaff; --btn-bg2:#5a92f3; --btn-text:#ffffff;
+  --btn-secondary-bg:rgba(244,247,251,0.82); --btn-secondary-border:rgba(220,230,242,0.8); --btn-secondary-text:#152238;
+
+  --chip-bg:rgba(246,249,253,0.62); --chip-border:rgba(230,238,247,0.62); --bar-bg:rgba(210,222,240,0.62);
+  --bar-fill-start:#ffd77f; --bar-fill-end:#83e6b4;
+}
+
+body.theme-rain {
+  --bg:#101a33; --text:#e8ecff; --muted:#a5afd6;
+  --card-bg:rgba(24,34,74,0.58); --card-border:rgba(47,59,114,0.65); --card-shadow:0 20px 38px rgba(0, 12, 48, 0.32);
+  --input-bg:rgba(18,29,63,0.7); --input-border:rgba(53,67,121,0.7); --input-text:#e8ecff;
+  --btn-bg:#6aa9ff; --btn-bg2:#3f7df2; --btn-text:#ffffff;
+  --btn-secondary-bg:rgba(34,51,103,0.68); --btn-secondary-border:rgba(50,65,121,0.7); --btn-secondary-text:#e8ecff;
+  --chip-bg:rgba(255,255,255,.06); --chip-border:rgba(255,255,255,.12); --bar-bg:rgba(36,55,107,0.6);
+  --bar-fill-start:#8fd5ff; --bar-fill-end:#5ce6b2;
+}
+
+body.theme-rain-heavy {
+  --bg:#0a1122; --text:#e6ebff; --muted:#939fce;
+  --card-bg:rgba(17,27,58,0.56); --card-border:rgba(47,61,116,0.68); --card-shadow:0 22px 44px rgba(0, 10, 32, 0.36);
+  --input-bg:rgba(13,23,52,0.7); --input-border:rgba(50,64,122,0.72); --input-text:#e6ebff;
+  --btn-bg:#568eff; --btn-bg2:#2662e0; --btn-text:#ffffff;
+  --btn-secondary-bg:rgba(29,41,88,0.68); --btn-secondary-border:rgba(43,60,116,0.7); --btn-secondary-text:#e6ebff;
+  --chip-bg:rgba(255,255,255,.06); --chip-border:rgba(255,255,255,.14); --bar-bg:rgba(31,45,96,0.6);
+  --bar-fill-start:#7fb0ff; --bar-fill-end:#5bd6aa;
+}
+
+body.theme-night {
+  --bg:#060b19; --text:#e6eaff; --muted:#9aa7d4;
+  --card-bg:rgba(16,27,56,0.55); --card-border:rgba(42,58,111,0.65); --card-shadow:0 20px 40px rgba(0,0,0,0.38);
+  --input-bg:rgba(11,21,48,0.72); --input-border:rgba(47,64,117,0.75); --input-text:#e6eaff;
+  --btn-bg:#5f96ff; --btn-bg2:#2f6ef0; --btn-text:#ffffff;
+  --btn-secondary-bg:rgba(26,37,80,0.7); --btn-secondary-border:rgba(44,59,114,0.7); --btn-secondary-text:#e6eaff;
+  --chip-bg:rgba(255,255,255,.06); --chip-border:rgba(255,255,255,.12); --bar-bg:rgba(32,47,93,0.55);
+  --bar-fill-start:#7fa7ff; --bar-fill-end:#62e1ff;
+}
+
+/* Weekly mood themes (dominant visual wash) */
+body.theme-week-isolated {
+  --bg:#f0f6ff; --text:#15325a; --muted:#5d6f91;
+  --card-bg:rgba(255,255,255,0.7); --card-border:rgba(221,230,246,0.65); --card-shadow:0 18px 34px rgba(21, 50, 90, 0.14);
+  --input-bg:rgba(255,255,255,0.85); --input-border:rgba(214,227,248,0.8); --input-text:#15325a;
+  --btn-bg:#9acbff; --btn-bg2:#5a95f2; --btn-text:#ffffff;
+  --btn-secondary-bg:rgba(245,249,255,0.82); --btn-secondary-border:rgba(222,232,250,0.82); --btn-secondary-text:#15325a;
+  --chip-bg:rgba(244,248,255,0.62); --chip-border:rgba(227,237,251,0.62); --bar-bg:rgba(213,227,249,0.62);
+  --bar-fill-start:#ffc977; --bar-fill-end:#75e0b0;
+  box-shadow: inset 0 0 0 9999px rgba(93, 183, 255, 0.05);
+}
+
+body.theme-week-wet {
+  --bg:#0a1226; --text:#e9ecff; --muted:#9aa5d2;
+  --card-bg:rgba(17,28,54,0.56); --card-border:rgba(47,62,108,0.68); --card-shadow:0 22px 46px rgba(0,0,0,0.4);
+  --input-bg:rgba(14,25,51,0.72); --input-border:rgba(52,65,116,0.72); --input-text:#e9ecff;
+  --btn-bg:#558dff; --btn-bg2:#245fe0; --btn-text:#ffffff;
+  --btn-secondary-bg:rgba(27,40,86,0.68); --btn-secondary-border:rgba(45,59,109,0.7); --btn-secondary-text:#e9ecff;
+  --chip-bg:rgba(255,255,255,.06); --chip-border:rgba(255,255,255,.14); --bar-bg:rgba(34,50,102,0.6);
+  --bar-fill-start:#7caeff; --bar-fill-end:#54d1a3;
+  box-shadow: inset 0 0 0 9999px rgba(70, 120, 255, 0.08);
+}
