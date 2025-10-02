@@ -18,6 +18,7 @@ const pop24h = el('pop-24h');
 const wind = el('wind');
 const tz = el('tz');
 const hourlyJson = el('hourly-json');
+let lastSuccessfulPlace = null;
 
 let toastTimer;
 function setStatus(msg) {
@@ -83,35 +84,66 @@ async function getForecast(lat, lon, timezone = 'auto') {
 }
 
 // Decide: vai chover?
+const ALGORITHM_CONFIG = {
+  v2: {
+    name: 'Sistema de Pontos',
+    rules: {
+      prob24h_40: { points: 2, desc: 'Prob. de chuva ≥ 40% nas próx. 24h' },
+      prob24h_70: { points: 2, desc: 'Prob. de chuva ≥ 70% nas próx. 24h' },
+      sum6h_0_5: { points: 2, desc: 'Chuva acumulada ≥ 0.5mm nas próx. 6h' },
+      sum6h_2_0: { points: 2, desc: 'Chuva acumulada ≥ 2.0mm nas próx. 6h' },
+      maxPrecip6h_1_0: { points: 2, desc: 'Pico de chuva ≥ 1.0mm/h nas próx. 6h' },
+      probDaytime_50: { points: 2, desc: 'Prob. de chuva ≥ 50% durante o dia' },
+    },
+    verdicts: {
+      willRain: { score: 6, text: 'Vai chover' },
+      mayRain: { score: 3, text: 'Pode chover' },
+      noRain: { score: 0, text: 'Não deve chover' },
+    }
+  }
+};
+
 function decideRain(hourly, nowIso) {
-  const times = hourly.time;
+  const times = hourly.time.map(t => new Date(t));
   const precip = hourly.precipitation || [];
   const prob = hourly.precipitation_probability || [];
 
-  // localizar índice do próximo horário (>= now)
   const now = new Date(nowIso);
-  let idx = times.findIndex((t) => new Date(t) >= now);
-  if (idx === -1) idx = 0;
+  let currentHourIdx = times.findIndex((t) => t >= now);
+  if (currentHourIdx === -1) currentHourIdx = 0;
 
-  // janela de 6h para acumulado de precipitação e 24h para probabilidade
-  const next6 = rangeSlice(precip, idx, idx + 6);
-  const next24prob = rangeSlice(prob, idx, idx + 24);
+  const sum6 = rangeSlice(precip, currentHourIdx, currentHourIdx + 6).reduce((a, b) => a + (b || 0), 0);
+  const maxProb24 = rangeSlice(prob, currentHourIdx, currentHourIdx + 24).reduce((a, b) => Math.max(a, b || 0), 0);
+  const maxPrecip6 = rangeSlice(precip, currentHourIdx, currentHourIdx + 6).reduce((a, b) => Math.max(a, b || 0), 0);
 
-  const sum6 = next6.reduce((a, b) => a + (b || 0), 0);
-  const maxProb24 = next24prob.reduce((a, b) => Math.max(a, b || 0), 0);
-
-  // heurística simples
-  // - Se acumulado 6h >= 1 mm: prov. chuva
-  // - Ou probabilidade máxima >= 50%: chance moderada
-  if (sum6 >= 1 || maxProb24 >= 70) {
-    console.log('[rain-now]', { sum6, maxProb24, verdict: 'Vai chover' });
-    return { verdict: 'Vai chover', emoji: '🌧️', cls: 'bad', sum6, maxProb24 };
-  } else if (maxProb24 >= 40 || sum6 > 0) {
-    console.log('[rain-now]', { sum6, maxProb24, verdict: 'Pode chover' });
-    return { verdict: 'Pode chover', emoji: '🌦️', cls: 'warn', sum6, maxProb24 };
+  // Find max probability during daytime hours (7am to 7pm)
+  let maxProbDaytime = 0;
+  for (let i = 0; i < 24 && (currentHourIdx + i) < times.length; i++) {
+    const hour = times[currentHourIdx + i].getHours();
+    if (hour >= 7 && hour < 19) {
+      maxProbDaytime = Math.max(maxProbDaytime, prob[currentHourIdx + i] || 0);
+    }
   }
-  console.log('[rain-now]', { sum6, maxProb24, verdict: 'Não deve chover' });
-  return { verdict: 'Não deve chover', emoji: '🌤️', cls: 'good', sum6, maxProb24 };
+
+  // Scoring system
+  let score = 0;
+  const cfg = ALGORITHM_CONFIG.v2.rules;
+  if (maxProb24 >= 40) score += cfg.prob24h_40.points;
+  if (maxProb24 >= 70) score += cfg.prob24h_70.points;
+  if (sum6 >= 0.5) score += cfg.sum6h_0_5.points;
+  if (sum6 >= 2.0) score += cfg.sum6h_2_0.points;
+  if (maxPrecip6 >= 1.0) score += cfg.maxPrecip6h_1_0.points;
+  if (maxProbDaytime >= 50) score += cfg.probDaytime_50.points;
+
+  console.log('[rain-score]', { score, maxProb24, sum6, maxPrecip6, maxProbDaytime });
+
+  const verdicts = ALGORITHM_CONFIG.v2.verdicts;
+  if (score >= verdicts.willRain.score) {
+    return { verdict: verdicts.willRain.text, emoji: '🌧️', cls: 'bad', sum6, maxProb24 };
+  } else if (score >= verdicts.mayRain.score) {
+    return { verdict: verdicts.mayRain.text, emoji: '🌦️', cls: 'warn', sum6, maxProb24 };
+  }
+  return { verdict: verdicts.noRain.text, emoji: '🌤️', cls: 'good', sum6, maxProb24 };
 }
 
 function rangeSlice(arr, start, end) {
@@ -124,6 +156,9 @@ function formatWind(ms) {
 }
 
 async function runForCoords(lat, lon, name) {
+  // Cache the last successful place for refresh functionality
+  if (name) lastSuccessfulPlace = { latitude: lat, longitude: lon, name: name };
+
   try {
     setStatus('Buscando previsão…');
     console.log('[run] coords', { lat, lon, name });
@@ -132,9 +167,9 @@ async function runForCoords(lat, lon, name) {
     const current = data.current || {};
     const hourly = data.hourly || {};
     window.__lastThemeData = { current, hourly, raw: data };
-  const tzName = data.timezone || 'auto';
-  const decision = decideRain(hourly, current.time || new Date().toISOString());
-  applyTheme(current, hourly, data);
+    const tzName = data.timezone || 'auto';
+    const decision = decideRain(hourly, current.time || new Date().toISOString());
+    applyTheme(current, hourly, data);
 
     // UI
     locationName.textContent = name || `Lat ${lat.toFixed(2)}, Lon ${lon.toFixed(2)}`;
@@ -180,6 +215,14 @@ async function runForCoords(lat, lon, name) {
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const q = (queryInput.value || '').trim();
+
+  // If the query is the same as the last successful search, just re-run it with stored coords.
+  if (lastSuccessfulPlace && q === lastSuccessfulPlace.name) {
+    console.log('[search] re-running for last successful place');
+    await runForCoords(lastSuccessfulPlace.latitude, lastSuccessfulPlace.longitude, lastSuccessfulPlace.name);
+    return;
+  }
+
   if (!q) {
     setStatus('Digite uma cidade ou use a localização');
     return;
@@ -219,6 +262,7 @@ btnGeoloc.addEventListener('click', () => {
 window.addEventListener('load', () => {
   runForCoords(-23.55, -46.63, 'São Paulo, BR');
   initBuiltInTour();
+  renderAlgorithmExplanation();
 });
 
 // === Semana (heurística baseada no seu resumo) ===
@@ -543,3 +587,27 @@ function initBuiltInTour(){
 }
 
 // (funções de tour removidas)
+
+function renderAlgorithmExplanation() {
+  const container = el('algorithm-explanation');
+  if (!container) return;
+
+  const cfg = ALGORITHM_CONFIG.v2;
+
+  const rulesHtml = Object.values(cfg.rules).map(rule => 
+    `<li><strong>+${rule.points} pontos:</strong> ${rule.desc}</li>`
+  ).join('');
+
+  container.innerHTML = `
+    <h3 class="footer-title-small">Algoritmo de Decisão (${cfg.name})</h3>
+    <p class="footer-text-small">
+      A decisão é baseada em um sistema de pontos que avalia vários fatores. A pontuação final determina o resultado:
+    </p>
+    <ul class="footer-list-small">
+      ${rulesHtml}
+    </ul>
+    <p class="footer-text-small" style="margin-top: 12px;">
+      <strong>Resultado:</strong> A previsão será "${cfg.verdicts.willRain.text}" com ${cfg.verdicts.willRain.score} ou mais pontos, e "${cfg.verdicts.mayRain.text}" com ${cfg.verdicts.mayRain.score} ou mais pontos.
+    </p>
+  `;
+}

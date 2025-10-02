@@ -120,7 +120,7 @@ body.theme-week-isolated {
   --btn-secondary-bg:rgba(245,249,255,0.82); --btn-secondary-border:rgba(222,232,250,0.82); --btn-secondary-text:#15325a;
   --chip-bg:rgba(244,248,255,0.62); --chip-border:rgba(227,237,251,0.62); --bar-bg:rgba(213,227,249,0.62);
   --bar-fill-start:#ffc977; --bar-fill-end:#75e0b0;
-  box-shadow: inset 0 0 0 9999px rgba(93, 183, 255, 0.05);
+
 }
 
 body.theme-week-wet {
@@ -131,5 +131,19 @@ body.theme-week-wet {
   --btn-secondary-bg:rgba(27,40,86,0.68); --btn-secondary-border:rgba(45,59,109,0.7); --btn-secondary-text:#e9ecff;
   --chip-bg:rgba(255,255,255,.06); --chip-border:rgba(255,255,255,.14); --bar-bg:rgba(34,50,102,0.6);
   --bar-fill-start:#7caeff; --bar-fill-end:#54d1a3;
+}
+
+body.theme-week-isolated::before,
+body.theme-week-wet::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+body.theme-week-isolated::before {
+  box-shadow: inset 0 0 0 9999px rgba(93, 183, 255, 0.05);
+}
+body.theme-week-wet::before {
   box-shadow: inset 0 0 0 9999px rgba(70, 120, 255, 0.08);
 }
