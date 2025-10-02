@@ -16,6 +16,9 @@ body {
   background: var(--bg-gradient-secondary), var(--bg-gradient-primary), var(--bg);
   color: var(--text);
   transition: background 400ms ease, color 300ms ease;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-size: cover, 140% 140%, auto;
+  background-position: center, center, center;
 }
 .container { max-width: 980px; margin: 0 auto; padding: 24px; }
 header h1 { margin: 0 0 6px; font-size: 32px; }
