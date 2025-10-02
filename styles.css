@@ -167,8 +167,18 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 }
 /* (seletores de fonte e UA removidos) */
 
-.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: center; }
-.big { font-size: 56px; line-height: 1; }
+.result-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 24px;
+  align-items: center;
+}
+.result-text-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.big { font-size: 72px; line-height: 1; }
 .headline { font-size: clamp(20px, 4vw, 24px); font-weight: 700; margin-top: 6px; }
 .facts { display: grid; gap: 8px; }
 .facts span { color: var(--muted); margin-right: 6px; }
@@ -460,5 +470,74 @@ body.week-bg-3 { --bg-gradient-secondary: linear-gradient(170deg, rgba(70,110,20
 .toast.show {
   transform: translate(-50%, 0);
   opacity: 1;
+  }
+
+/* Hourly Forecast Ruler */
+.hourly-ruler-container {
+  margin-top: 24px;
+}
+.hourly-ruler-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.hourly-ruler {
+  display: flex;
+  gap: 4px;
+  padding: 12px 0;
+  overflow-x: auto;
+  /* Custom scrollbar for better look */
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-2) transparent;
+}
+.hourly-ruler::-webkit-scrollbar {
+  height: 6px;
+}
+.hourly-ruler::-webkit-scrollbar-track {
+  background: transparent;
+}
+.hourly-ruler::-webkit-scrollbar-thumb {
+  background-color: var(--accent-2);
+  border-radius: 6px;
+}
+.hour-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 40px;
+}
+.hour-bar-wrapper {
+  height: 80px;
+  width: 12px;
+  background: var(--chip-bg);
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-end; /* Bars grow from bottom */
+}
+.hour-bar {
+  width: 100%;
+  background: var(--btn-bg);
+  border-radius: 6px;
+  transition: height 300ms ease;
+}
+.hour-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.hour-pop {
+  font-size: 11px;
+  color: var(--accent-2);
+  font-weight: 700;
+  visibility: hidden; /* Hidden by default */
+  height: 14px; /* Reserve space */
+}
+.hour-col:hover .hour-pop {
   visibility: visible;
 }
+.hour-bar[style*="height: 0%"] ~ .hour-pop {
+  visibility: hidden !important;
+}
+

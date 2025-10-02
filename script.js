@@ -11,13 +11,11 @@ const sectionResult = el('result');
 const locationName = el('location-name');
 const rainEmoji = el('rain-emoji');
 const rainAnswer = el('rain-answer');
-const rainDetail = el('rain-detail');
 const tempNow = el('temp-now');
 const rain6h = el('rain-6h');
 const pop24h = el('pop-24h');
 const wind = el('wind');
 const tz = el('tz');
-const hourlyJson = el('hourly-json');
 let lastSuccessfulPlace = null;
 
 let toastTimer;
@@ -178,7 +176,6 @@ async function runForCoords(lat, lon, name) {
     rainEmoji.textContent = decision.emoji;
     rainAnswer.textContent = decision.verdict;
     rainAnswer.className = 'headline ' + decision.cls;
-    rainDetail.textContent = `Acum. 6h: ${decision.sum6.toFixed(1)} mm • Prob. máx. 24h: ${decision.maxProb24}%`;
 
     const tNow = current.temperature_2m;
     tempNow.textContent = typeof tNow === 'number' ? `${tNow.toFixed(1)} °C` : '—';
@@ -186,19 +183,13 @@ async function runForCoords(lat, lon, name) {
     pop24h.textContent = `${decision.maxProb24}%`;
     wind.textContent = formatWind(current.wind_speed_10m);
 
-    // detalhes (resumo das próximas horas)
-    const preview = (hourly.time || []).slice(0, 12).map((t, i) => ({
-      t,
-      precip: hourly.precipitation?.[i],
-      pop: hourly.precipitation_probability?.[i],
-      temp: hourly.temperature_2m?.[i]
-    }));
-    hourlyJson.textContent = JSON.stringify(preview, null, 2);
+
 
     showResult(true);
     setStatus('');
 
-    // Semana
+    // Horas e Semana
+    renderHourlyForecast(hourly, current.time || new Date().toISOString());
     const week = computeWeek(data);
     renderWeek(week);
     console.log('[week]', { rainyDays: week.rainyDays, summary: week.summary.verdict });
@@ -340,6 +331,41 @@ function formatDayMonth(dateStr) {
 }
 
 function fmtTemp(v){ return (v==null? '—' : Math.round(v)); }
+
+function renderHourlyForecast(hourly, nowIso) {
+  const container = el('hourly-ruler-content');
+  if (!container) return;
+
+  const times = hourly.time.map(t => new Date(t));
+  const probs = hourly.precipitation_probability || [];
+
+  const now = new Date(nowIso);
+  let currentHourIdx = times.findIndex((t) => t >= now);
+  if (currentHourIdx === -1) {
+    container.innerHTML = '';
+    return;
+  }
+
+  let html = '';
+  for (let i = 0; i < 24; i++) {
+    const dataIdx = currentHourIdx + i;
+    if (dataIdx >= times.length) break;
+
+    const hour = times[dataIdx].getHours();
+    const pop = probs[dataIdx] || 0;
+
+    html += `
+      <div class="hour-col" title="${pop}% de chance de chuva às ${hour}h">
+        <div class="hour-pop">${pop > 0 ? pop + '%' : ''}</div>
+        <div class="hour-bar-wrapper">
+          <div class="hour-bar" style="height: ${pop}%"></div>
+        </div>
+        <div class="hour-label">${hour}h</div>
+      </div>
+    `;
+  }
+  container.innerHTML = html;
+}
 
 // === Autocomplete ===
 let activeIndex = -1;

@@ -41,24 +41,23 @@
       <section id="result" class="card hidden" aria-live="polite">
         <h2 id="location-name">—</h2>
         <div class="result-grid">
-          <div>
-            <div class="big" id="rain-emoji">☁️</div>
+          <div class="big" id="rain-emoji">☁️</div>
+          <div class="result-text-content">
             <div class="headline" id="rain-answer">Calculando…</div>
-            <div class="muted" id="rain-detail">—</div>
-          </div>
-          <div class="facts">
-            <div><span>Temp. agora:</span> <strong id="temp-now">—</strong></div>
-            <div><span>Chuva nas próximas 6h:</span> <strong id="rain-6h">—</strong></div>
-            <div><span>Prob. de chuva (próx. 24h):</span> <strong id="pop-24h">—</strong></div>
-            <div><span>Vento:</span> <strong id="wind">—</strong></div>
-            <div class="muted tiny" id="meta">Fonte: Open‑Meteo • Timezone: <span id="tz">—</span></div>
+            <div class="facts">
+              <div><span>Temp. agora:</span> <strong id="temp-now">—</strong></div>
+              <div><span>Chuva nas próximas 6h:</span> <strong id="rain-6h">—</strong></div>
+              <div><span>Prob. de chuva (próx. 24h):</span> <strong id="pop-24h">—</strong></div>
+              <div><span>Vento:</span> <strong id="wind">—</strong></div>
+              <div class="muted tiny" id="meta">Fonte: Open‑Meteo • Timezone: <span id="tz">—</span></div>
+            </div>
           </div>
         </div>
-        <details class="tiny">
-          <summary>Ver detalhes horários</summary>
-          <pre id="hourly-json" class="pre"></pre>
-        </details>
-        <hr/>
+        <div class="hourly-ruler-container">
+          <div class="hourly-ruler-title">Previsão para as próximas 24h</div>
+          <div id="hourly-ruler-content" class="hourly-ruler"></div>
+        </div>
+
         <h3>Nesta semana</h3>
         <div id="week-summary" class="headline">—</div>
         <div id="week-theme-label" class="tiny muted">Tema: —</div>
@@ -103,7 +102,7 @@
               <h3>Dicas rápidas</h3>
               <ul class="footer-list">
                 <li>Use o botão <strong>Guia</strong> para um tour guiado da interface.</li>
-                <li>Abra "Ver detalhes horários" para inspecionar os dados brutos.</li>
+                <li>Passe o mouse sobre a régua de 24h para ver a probabilidade de chuva a cada hora.</li>
                 <li>Confira a confiança diária antes de planejar atividades externas.</li>
               </ul>
             </div>
