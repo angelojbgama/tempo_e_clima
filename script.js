@@ -230,6 +230,22 @@ form.addEventListener('submit', async (e) => {
   }
 });
 
+async function reverseGeocode(lat, lon) {
+  console.log('[reverse-geocode] fetching for', { lat, lon });
+  const url = new URL('https://nominatim.openstreetmap.org/reverse');
+  url.searchParams.set('lat', lat);
+  url.searchParams.set('lon', lon);
+  url.searchParams.set('format', 'json');
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error('Falha no geocoding reverso');
+  const data = await res.json();
+  console.log('[reverse-geocode] result', data);
+  if (data.error) throw new Error(data.error);
+  const address = data.address;
+  const name = address.city || address.town || address.village || address.hamlet || 'Localização atual';
+  return { name, country: address.country };
+}
+
 btnGeoloc.addEventListener('click', () => {
   if (!navigator.geolocation) {
     setStatus('Geolocalização não suportada');
@@ -240,8 +256,18 @@ btnGeoloc.addEventListener('click', () => {
   navigator.geolocation.getCurrentPosition(async (pos) => {
     const { latitude, longitude } = pos.coords;
     console.log('[geoloc] coords', { latitude, longitude });
-    await runForCoords(latitude, longitude);
-    btnGeoloc.disabled = false;
+    try {
+      setStatus('Buscando nome do local…');
+      const place = await reverseGeocode(latitude, longitude);
+      const displayName = `${place.name}, ${place.country}`;
+      await runForCoords(latitude, longitude, displayName);
+    } catch (err) {
+      console.error('Erro no reverse geocoding, usando coordenadas', err);
+      // Fallback to coordinates if reverse geocoding fails
+      await runForCoords(latitude, longitude);
+    } finally {
+      btnGeoloc.disabled = false;
+    }
   }, (err) => {
     setStatus('Não foi possível obter a localização');
     btnGeoloc.disabled = false;
