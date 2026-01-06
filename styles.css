@@ -221,6 +221,20 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   box-shadow: var(--card-shadow);
   backdrop-filter: blur(16px) saturate(160%);
   -webkit-backdrop-filter: blur(16px) saturate(160%);
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.day-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-2);
+}
+.day-card.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), var(--card-shadow);
+}
+.day-card:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
 }
 .day-card .dow { color: var(--muted); font-size: 12px; }
 .day-card .date { font-weight: 600; margin-bottom: 6px; }
@@ -540,4 +554,3 @@ body.week-bg-3 { --bg-gradient-secondary: linear-gradient(170deg, rgba(70,110,20
 .hour-bar[style*="height: 0%"] ~ .hour-pop {
   visibility: hidden !important;
 }
-

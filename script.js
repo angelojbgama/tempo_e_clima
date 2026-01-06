@@ -189,9 +189,10 @@ async function runForCoords(lat, lon, name) {
     setStatus('');
 
     // Horas e Semana
-    renderHourlyForecast(hourly, current.time || new Date().toISOString());
+    const nowIso = current.time || new Date().toISOString();
+    renderHourlyForecast(hourly, nowIso);
     const week = computeWeek(data);
-    renderWeek(week);
+    renderWeek(week, hourly, nowIso);
     console.log('[week]', { rainyDays: week.rainyDays, summary: week.summary.verdict });
     // sinalizar que a UI está pronta para o tour
     window.__appReady = true;
@@ -322,7 +323,7 @@ function computeWeek(api) {
   return { days, rainyDays, summary };
 }
 
-function renderWeek(week) {
+function renderWeek(week, hourly, nowIso) {
   const container = document.getElementById('week-grid');
   const sumEl = document.getElementById('week-summary');
   const themeEl = document.getElementById('week-theme-label');
@@ -331,10 +332,25 @@ function renderWeek(week) {
   sumEl.className = 'headline ' + week.summary.cls;
   if (themeEl) themeEl.textContent = `Tema: ${labelWeekMood(week)}`;
 
+  const setActiveCard = (card) => {
+    Array.from(container.children).forEach(child => {
+      const isActive = child === card;
+      child.classList.toggle('is-active', isActive);
+      child.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+  };
+
   container.innerHTML = '';
   week.days.forEach(d => {
     const card = document.createElement('div');
     card.className = 'day-card';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-pressed', 'false');
+
+    const label = `${d.dow}, ${formatDayMonth(d.date)}`;
+    card.setAttribute('aria-label', `Ver previsão horária de ${label}`);
+
     const emoji = d.rainy ? (d.pop >= 70 || d.mm >= 5 ? '🌧️' : '🌦️') : '🌤️';
     const indicator = d.pop >= 75 ? '<div class="rain-indicator"></div>' : '';
     card.innerHTML = `
@@ -345,6 +361,19 @@ function renderWeek(week) {
       <div class="mm">${d.mm} mm • ${d.pop != null ? d.pop + '%' : '—%'} • ${fmtTemp(d.tmin)}/${fmtTemp(d.tmax)}°C</div>
       <div class="conf"><span style="width:${Math.round(d.conf*100)}%"></span></div>
     `;
+
+    const activate = () => {
+      renderHourlyForecast(hourly, nowIso, { date: d.date, title: `Previsão horária — ${label}` });
+      setActiveCard(card);
+    };
+    card.addEventListener('click', activate);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        activate();
+      }
+    });
+
     container.appendChild(card);
   });
   // adjust theme for weekly mood (dominant)
@@ -358,27 +387,50 @@ function formatDayMonth(dateStr) {
 
 function fmtTemp(v){ return (v==null? '—' : Math.round(v)); }
 
-function renderHourlyForecast(hourly, nowIso) {
+function renderHourlyForecast(hourly, nowIso, opts = {}) {
   const container = el('hourly-ruler-content');
   if (!container) return;
 
-  const times = hourly.time.map(t => new Date(t));
-  const probs = hourly.precipitation_probability || [];
+  const titleEl = el('hourly-ruler-title');
+  const defaultTitle = 'Previsão para as próximas 24h';
+  if (titleEl) titleEl.textContent = opts.title || defaultTitle;
 
-  const now = new Date(nowIso);
-  let currentHourIdx = times.findIndex((t) => t >= now);
-  if (currentHourIdx === -1) {
+  if (!hourly || !Array.isArray(hourly.time) || !hourly.time.length) {
     container.innerHTML = '';
     return;
   }
 
-  let html = '';
-  for (let i = 0; i < 24; i++) {
-    const dataIdx = currentHourIdx + i;
-    if (dataIdx >= times.length) break;
+  const times = hourly.time.map(t => new Date(t));
+  const probs = hourly.precipitation_probability || [];
 
-    const hour = times[dataIdx].getHours();
-    const pop = probs[dataIdx] || 0;
+  let startIdx = 0;
+  let endIdx = 0;
+
+  if (opts.date) {
+    const datePrefix = `${opts.date}T`;
+    startIdx = hourly.time.findIndex(t => t.startsWith(datePrefix));
+    if (startIdx === -1) {
+      container.innerHTML = '<div class="muted tiny">Sem dados horários para este dia.</div>';
+      return;
+    }
+    endIdx = startIdx;
+    while (endIdx < hourly.time.length && hourly.time[endIdx].startsWith(datePrefix)) {
+      endIdx++;
+    }
+  } else {
+    const now = new Date(nowIso);
+    startIdx = times.findIndex((t) => t >= now);
+    if (startIdx === -1) {
+      container.innerHTML = '';
+      return;
+    }
+    endIdx = Math.min(startIdx + 24, times.length);
+  }
+
+  let html = '';
+  for (let i = startIdx; i < endIdx; i++) {
+    const hour = times[i].getHours();
+    const pop = probs[i] || 0;
 
     html += `
       <div class="hour-col" title="${pop}% de chance de chuva às ${hour}h">
@@ -391,6 +443,7 @@ function renderHourlyForecast(hourly, nowIso) {
     `;
   }
   container.innerHTML = html;
+  container.scrollLeft = 0;
 }
 
 // === Autocomplete ===
