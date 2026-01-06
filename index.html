@@ -11,7 +11,7 @@
   <body>
     <header class="container">
       <h1>Vai chover?</h1>
-      <p class="subtitle">Previsão simples usando Open‑Meteo (sem API key)</p>
+      <p class="subtitle">Previsão simples usando Open‑Meteo</p>
       <div class="header-actions">
         <button id="btn-tour" class="guide-btn" type="button" aria-describedby="guide-btn-desc">
           <span class="guide-icon" aria-hidden="true">✨</span>
@@ -45,10 +45,10 @@
           <div class="result-text-content">
             <div class="headline" id="rain-answer">Calculando…</div>
             <div class="facts">
-              <div><span>Temp. agora:</span> <strong id="temp-now">—</strong></div>
-              <div><span>Chuva nas próximas 6h:</span> <strong id="rain-6h">—</strong></div>
-              <div><span>Prob. de chuva (próx. 24h):</span> <strong id="pop-24h">—</strong></div>
-              <div><span>Vento:</span> <strong id="wind">—</strong></div>
+              <div><span id="temp-label">Temp. agora:</span> <strong id="temp-now">—</strong></div>
+              <div><span id="rain-6h-label">Chuva nas próximas 6h:</span> <strong id="rain-6h">—</strong></div>
+              <div><span id="pop-24h-label">Prob. de chuva (próx. 24h):</span> <strong id="pop-24h">—</strong></div>
+              <div><span id="wind-label">Vento:</span> <strong id="wind">—</strong></div>
               <div class="muted tiny" id="meta">Fonte: Open‑Meteo • Timezone: <span id="tz">—</span></div>
             </div>
           </div>
@@ -78,7 +78,6 @@
               <div class="footer-tags">
                 <span class="footer-tag">Open‑Meteo</span>
                 <span class="footer-tag">100% client-side</span>
-                <span class="footer-tag">Sem API key</span>
               </div>
             </div>
             <div class="footer-column">

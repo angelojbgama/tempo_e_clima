@@ -15,6 +15,10 @@ const tempNow = el('temp-now');
 const rain6h = el('rain-6h');
 const pop24h = el('pop-24h');
 const wind = el('wind');
+const tempLabel = el('temp-label');
+const rain6hLabel = el('rain-6h-label');
+const pop24hLabel = el('pop-24h-label');
+const windLabel = el('wind-label');
 const tz = el('tz');
 let lastSuccessfulPlace = null;
 
@@ -101,6 +105,63 @@ const ALGORITHM_CONFIG = {
   }
 };
 
+const SUMMARY_LABELS = {
+  now: {
+    temp: 'Temp. agora:',
+    rain6h: 'Chuva nas próximas 6h:',
+    pop24h: 'Prob. de chuva (próx. 24h):',
+    wind: 'Vento:'
+  },
+  day: {
+    temp: 'Temp. do dia:',
+    rain6h: 'Pico de chuva (6h):',
+    pop24h: 'Prob. de chuva (dia):',
+    wind: 'Vento (máx. dia):'
+  }
+};
+
+function setSummaryLabels(mode) {
+  const labels = SUMMARY_LABELS[mode] || SUMMARY_LABELS.now;
+  if (tempLabel) tempLabel.textContent = labels.temp;
+  if (rain6hLabel) rain6hLabel.textContent = labels.rain6h;
+  if (pop24hLabel) pop24hLabel.textContent = labels.pop24h;
+  if (windLabel) windLabel.textContent = labels.wind;
+}
+
+function applyDecisionToUI(decision) {
+  if (!decision) return;
+  rainEmoji.textContent = decision.emoji;
+  rainAnswer.textContent = decision.verdict;
+  rainAnswer.className = 'headline ' + decision.cls;
+  rain6h.textContent = `${decision.sum6.toFixed(1)} mm`;
+  pop24h.textContent = `${Math.round(decision.maxProb24)}%`;
+}
+
+function buildDecision(metrics) {
+  const cfg = ALGORITHM_CONFIG.v2.rules;
+  const sum6 = metrics.sum6 || 0;
+  const maxProb24 = metrics.maxProb24 || 0;
+  const maxPrecip6 = metrics.maxPrecip6 || 0;
+  const maxProbDaytime = metrics.maxProbDaytime || 0;
+
+  let score = 0;
+  if (maxProb24 >= 40) score += cfg.prob24h_40.points;
+  if (maxProb24 >= 70) score += cfg.prob24h_70.points;
+  if (sum6 >= 0.5) score += cfg.sum6h_0_5.points;
+  if (sum6 >= 2.0) score += cfg.sum6h_2_0.points;
+  if (maxPrecip6 >= 1.0) score += cfg.maxPrecip6h_1_0.points;
+  if (maxProbDaytime >= 50) score += cfg.probDaytime_50.points;
+
+  const verdicts = ALGORITHM_CONFIG.v2.verdicts;
+  if (score >= verdicts.willRain.score) {
+    return { verdict: verdicts.willRain.text, emoji: '🌧️', cls: 'bad', sum6, maxProb24, maxPrecip6, maxProbDaytime, score };
+  }
+  if (score >= verdicts.mayRain.score) {
+    return { verdict: verdicts.mayRain.text, emoji: '🌦️', cls: 'warn', sum6, maxProb24, maxPrecip6, maxProbDaytime, score };
+  }
+  return { verdict: verdicts.noRain.text, emoji: '🌤️', cls: 'good', sum6, maxProb24, maxPrecip6, maxProbDaytime, score };
+}
+
 function decideRain(hourly, nowIso) {
   const times = hourly.time.map(t => new Date(t));
   const precip = hourly.precipitation || [];
@@ -123,25 +184,9 @@ function decideRain(hourly, nowIso) {
     }
   }
 
-  // Scoring system
-  let score = 0;
-  const cfg = ALGORITHM_CONFIG.v2.rules;
-  if (maxProb24 >= 40) score += cfg.prob24h_40.points;
-  if (maxProb24 >= 70) score += cfg.prob24h_70.points;
-  if (sum6 >= 0.5) score += cfg.sum6h_0_5.points;
-  if (sum6 >= 2.0) score += cfg.sum6h_2_0.points;
-  if (maxPrecip6 >= 1.0) score += cfg.maxPrecip6h_1_0.points;
-  if (maxProbDaytime >= 50) score += cfg.probDaytime_50.points;
-
-  console.log('[rain-score]', { score, maxProb24, sum6, maxPrecip6, maxProbDaytime });
-
-  const verdicts = ALGORITHM_CONFIG.v2.verdicts;
-  if (score >= verdicts.willRain.score) {
-    return { verdict: verdicts.willRain.text, emoji: '🌧️', cls: 'bad', sum6, maxProb24 };
-  } else if (score >= verdicts.mayRain.score) {
-    return { verdict: verdicts.mayRain.text, emoji: '🌦️', cls: 'warn', sum6, maxProb24 };
-  }
-  return { verdict: verdicts.noRain.text, emoji: '🌤️', cls: 'good', sum6, maxProb24 };
+  const decision = buildDecision({ sum6, maxProb24, maxPrecip6, maxProbDaytime });
+  console.log('[rain-score]', { score: decision.score, maxProb24, sum6, maxPrecip6, maxProbDaytime });
+  return decision;
 }
 
 function rangeSlice(arr, start, end) {
@@ -150,7 +195,95 @@ function rangeSlice(arr, start, end) {
 
 function formatWind(ms) {
   // Open‑Meteo retorna km/h para wind_speed_10m em current
-  return `${ms?.toFixed ? ms.toFixed(0) : ms} km/h`;
+  if (typeof ms !== 'number' || Number.isNaN(ms)) return '—';
+  return `${ms.toFixed(0)} km/h`;
+}
+
+function formatTempRange(min, max) {
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return '—';
+  return `${min.toFixed(1)} / ${max.toFixed(1)} °C`;
+}
+
+function safeMax(values) {
+  let max = null;
+  values.forEach((v) => {
+    if (typeof v === 'number' && Number.isFinite(v)) {
+      max = max === null ? v : Math.max(max, v);
+    }
+  });
+  return max;
+}
+
+function safeMin(values) {
+  let min = null;
+  values.forEach((v) => {
+    if (typeof v === 'number' && Number.isFinite(v)) {
+      min = min === null ? v : Math.min(min, v);
+    }
+  });
+  return min;
+}
+
+function computeMaxWindowSum(values, windowSize) {
+  if (!values.length) return 0;
+  if (values.length <= windowSize) {
+    return values.reduce((a, b) => a + (b || 0), 0);
+  }
+  let max = 0;
+  let sum = 0;
+  for (let i = 0; i < values.length; i++) {
+    sum += values[i] || 0;
+    if (i >= windowSize) sum -= values[i - windowSize] || 0;
+    if (i >= windowSize - 1) max = Math.max(max, sum);
+  }
+  return max;
+}
+
+function computeMaxDaytimeProb(probs, times) {
+  let max = 0;
+  for (let i = 0; i < times.length; i++) {
+    const hour = times[i].getHours();
+    if (hour >= 7 && hour < 19) {
+      max = Math.max(max, probs[i] || 0);
+    }
+  }
+  return max;
+}
+
+function getHourlyRangeForDate(hourly, date) {
+  if (!hourly || !Array.isArray(hourly.time)) return null;
+  const datePrefix = `${date}T`;
+  const startIdx = hourly.time.findIndex(t => t.startsWith(datePrefix));
+  if (startIdx === -1) return null;
+  let endIdx = startIdx;
+  while (endIdx < hourly.time.length && hourly.time[endIdx].startsWith(datePrefix)) {
+    endIdx++;
+  }
+  return { startIdx, endIdx };
+}
+
+function computeDaySummary(hourly, date) {
+  const range = getHourlyRangeForDate(hourly, date);
+  if (!range) return null;
+
+  const { startIdx, endIdx } = range;
+  const times = hourly.time.map(t => new Date(t)).slice(startIdx, endIdx);
+  const precip = (hourly.precipitation || []).slice(startIdx, endIdx);
+  const prob = (hourly.precipitation_probability || []).slice(startIdx, endIdx);
+  const temps = (hourly.temperature_2m || []).slice(startIdx, endIdx);
+  const winds = (hourly.wind_speed_10m || []).slice(startIdx, endIdx);
+
+  const sum6 = computeMaxWindowSum(precip, 6);
+  const maxProb24 = safeMax(prob) ?? 0;
+  const maxPrecip6 = safeMax(precip) ?? 0;
+  const maxProbDaytime = computeMaxDaytimeProb(prob, times);
+
+  const decision = buildDecision({ sum6, maxProb24, maxPrecip6, maxProbDaytime });
+  const tMin = safeMin(temps);
+  const tMax = safeMax(temps);
+  const windMax = safeMax(winds);
+
+  return { decision, tMin, tMax, windMax };
 }
 
 async function runForCoords(lat, lon, name) {
@@ -173,14 +306,11 @@ async function runForCoords(lat, lon, name) {
     locationName.textContent = name || `Lat ${lat.toFixed(2)}, Lon ${lon.toFixed(2)}`;
     tz.textContent = tzName;
 
-    rainEmoji.textContent = decision.emoji;
-    rainAnswer.textContent = decision.verdict;
-    rainAnswer.className = 'headline ' + decision.cls;
+    setSummaryLabels('now');
+    applyDecisionToUI(decision);
 
     const tNow = current.temperature_2m;
     tempNow.textContent = typeof tNow === 'number' ? `${tNow.toFixed(1)} °C` : '—';
-    rain6h.textContent = `${decision.sum6.toFixed(1)} mm`;
-    pop24h.textContent = `${decision.maxProb24}%`;
     wind.textContent = formatWind(current.wind_speed_10m);
 
 
@@ -351,7 +481,10 @@ function renderWeek(week, hourly, nowIso) {
     const label = `${d.dow}, ${formatDayMonth(d.date)}`;
     card.setAttribute('aria-label', `Ver previsão horária de ${label}`);
 
-    const emoji = d.rainy ? (d.pop >= 70 || d.mm >= 5 ? '🌧️' : '🌦️') : '🌤️';
+    const daySummary = computeDaySummary(hourly, d.date);
+    const emoji = daySummary?.decision?.emoji
+      ? daySummary.decision.emoji
+      : d.rainy ? (d.pop >= 70 || d.mm >= 5 ? '🌧️' : '🌦️') : '🌤️';
     const indicator = d.pop >= 75 ? '<div class="rain-indicator"></div>' : '';
     card.innerHTML = `
       ${indicator}
@@ -363,6 +496,13 @@ function renderWeek(week, hourly, nowIso) {
     `;
 
     const activate = () => {
+      const summary = daySummary || computeDaySummary(hourly, d.date);
+      if (summary) {
+        setSummaryLabels('day');
+        applyDecisionToUI(summary.decision);
+        tempNow.textContent = formatTempRange(summary.tMin, summary.tMax);
+        wind.textContent = formatWind(summary.windMax);
+      }
       renderHourlyForecast(hourly, nowIso, { date: d.date, title: `Previsão horária — ${label}` });
       setActiveCard(card);
     };
@@ -407,16 +547,13 @@ function renderHourlyForecast(hourly, nowIso, opts = {}) {
   let endIdx = 0;
 
   if (opts.date) {
-    const datePrefix = `${opts.date}T`;
-    startIdx = hourly.time.findIndex(t => t.startsWith(datePrefix));
-    if (startIdx === -1) {
+    const range = getHourlyRangeForDate(hourly, opts.date);
+    if (!range) {
       container.innerHTML = '<div class="muted tiny">Sem dados horários para este dia.</div>';
       return;
     }
-    endIdx = startIdx;
-    while (endIdx < hourly.time.length && hourly.time[endIdx].startsWith(datePrefix)) {
-      endIdx++;
-    }
+    startIdx = range.startIdx;
+    endIdx = range.endIdx;
   } else {
     const now = new Date(nowIso);
     startIdx = times.findIndex((t) => t >= now);
