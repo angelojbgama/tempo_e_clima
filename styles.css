@@ -102,11 +102,6 @@ input[type="text"] {
 .search-row .auto input { width: 100%; }
   .search-row button { flex-shrink: 0; }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.3; transform: scale(0.8); }
-}
-
 .rain-indicator {
   position: absolute;
   top: 10px;
@@ -116,7 +111,35 @@ input[type="text"] {
   background-color: var(--accent-2);
   border-radius: 50%;
   box-shadow: 0 0 6px var(--accent-2);
-  animation: blink 1.5s infinite ease-in-out;
+  cursor: help;
+}
+.rain-indicator::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: 0;
+  top: -8px;
+  transform: translate(30%, -90%);
+  white-space: nowrap;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  background: color-mix(in srgb, var(--card-bg) 88%, transparent);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: var(--card-shadow);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 140ms ease, transform 140ms ease, visibility 140ms ease;
+  pointer-events: none;
+  z-index: 2;
+}
+.rain-indicator:hover::after,
+.rain-indicator:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(30%, -110%);
 }
 .search-row button { height: 100%; padding: 12px 20px; justify-self: end; }
 .search-row .emoji-btn { min-width: 52px; font-size: 22px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; }

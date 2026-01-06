@@ -485,7 +485,9 @@ function renderWeek(week, hourly, nowIso) {
     const emoji = daySummary?.decision?.emoji
       ? daySummary.decision.emoji
       : d.rainy ? (d.pop >= 70 || d.mm >= 5 ? '🌧️' : '🌦️') : '🌤️';
-    const indicator = d.pop >= 75 ? '<div class="rain-indicator"></div>' : '';
+    const indicator = d.pop >= 75
+      ? '<div class="rain-indicator" data-tooltip="Alta chance de chuva no dia (>= 75%)" aria-label="Alta chance de chuva no dia (>= 75%)" role="img"></div>'
+      : '';
     card.innerHTML = `
       ${indicator}
       <div class="dow">${d.dow}</div>
