@@ -39,7 +39,18 @@
       </section>
 
       <section id="result" class="card hidden" aria-live="polite">
-        <h2 id="location-name">—</h2>
+        <div class="result-topbar">
+          <h2 id="location-name">—</h2>
+          <div class="result-actions">
+            <button id="btn-now" type="button" class="secondary btn-now" aria-pressed="false">Agora</button>
+            <div class="unit-toggle" role="group" aria-label="Unidade de temperatura">
+              <span class="unit-label">Temperatura:</span>
+              <button type="button" class="unit-btn is-active" data-unit="C" aria-pressed="true">°C</button>
+              <button type="button" class="unit-btn" data-unit="K" aria-pressed="false">K</button>
+              <button type="button" class="unit-btn" data-unit="F" aria-pressed="false">°F</button>
+            </div>
+          </div>
+        </div>
         <div class="result-grid">
           <div class="big" id="rain-emoji">☁️</div>
           <div class="result-text-content">
@@ -49,6 +60,11 @@
               <div><span id="rain-6h-label">Chuva nas próximas 6h:</span> <strong id="rain-6h">—</strong></div>
               <div><span id="pop-24h-label">Prob. de chuva (próx. 24h):</span> <strong id="pop-24h">—</strong></div>
               <div><span id="wind-label">Vento:</span> <strong id="wind">—</strong></div>
+              <div><span id="humidity-label" class="info-tip" tabindex="0" data-tooltip="Umidade relativa do ar em % - indica quanto vapor d'água há no ambiente.">Umidade agora:</span> <strong id="humidity">—</strong></div>
+              <div><span id="uv-label" class="info-tip" tabindex="0" data-tooltip="Índice UV mede a intensidade da radiação ultravioleta; valores altos pedem proteção. Min/max calculados entre nascer e pôr do sol.">Índice UV agora:</span> <strong id="uv">—</strong></div>
+              <div><span id="aqi-label" class="info-tip" tabindex="0" data-tooltip="IQA (US AQI) resume a qualidade do ar: 0-50 bom, 51-100 moderado, acima disso ruim.">IQA (US):</span> <strong id="aqi">—</strong></div>
+              <div><span id="sunrise-label">🌅 Nascer do sol:</span> <strong id="sunrise">—</strong></div>
+              <div><span id="sunset-label">🌇 Pôr do sol:</span> <strong id="sunset">—</strong></div>
               <div class="muted tiny" id="meta">Fonte: Open‑Meteo • Timezone: <span id="tz">—</span></div>
             </div>
           </div>

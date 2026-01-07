@@ -9,6 +9,7 @@
 
   /* card */
   --card-bg: rgba(18,24,51,0.6);
+  --surface-solid: #121833;
   --card-border: rgba(38,48,102,0.65);
   --card-shadow: 0 16px 32px rgba(6,12,32,0.32);
 
@@ -42,6 +43,7 @@ body.theme-clear-day {
 
   /* cards claros e leves */
   --card-bg:rgba(255,255,255,0.68);       /* branco translúcido */
+  --surface-solid:#ffffff;
   --card-border:rgba(230,238,249,0.65);   /* borda azul suave */
   --card-shadow:0 18px 36px rgba(63, 160, 255, 0.18); /* sombra luminosa */
 
@@ -70,7 +72,7 @@ body.theme-cloudy {
   /* base suave, tons frios */
   --bg:#eaf0f6; --text:#152238; --muted:#5b6c85;
 
-  --card-bg:rgba(255,255,255,0.64); --card-border:rgba(221,229,239,0.65); --card-shadow:0 14px 28px rgba(21, 34, 56, 0.1);
+  --card-bg:rgba(255,255,255,0.64); --surface-solid:#ffffff; --card-border:rgba(221,229,239,0.65); --card-shadow:0 14px 28px rgba(21, 34, 56, 0.1);
 
   --input-bg:rgba(255,255,255,0.78); --input-border:rgba(211,222,235,0.75); --input-text:#152238;
 
@@ -83,7 +85,7 @@ body.theme-cloudy {
 
 body.theme-rain {
   --bg:#101a33; --text:#e8ecff; --muted:#a5afd6;
-  --card-bg:rgba(24,34,74,0.58); --card-border:rgba(47,59,114,0.65); --card-shadow:0 20px 38px rgba(0, 12, 48, 0.32);
+  --card-bg:rgba(24,34,74,0.58); --surface-solid:#18224a; --card-border:rgba(47,59,114,0.65); --card-shadow:0 20px 38px rgba(0, 12, 48, 0.32);
   --input-bg:rgba(18,29,63,0.7); --input-border:rgba(53,67,121,0.7); --input-text:#e8ecff;
   --btn-bg:#6aa9ff; --btn-bg2:#3f7df2; --btn-text:#ffffff;
   --btn-secondary-bg:rgba(34,51,103,0.68); --btn-secondary-border:rgba(50,65,121,0.7); --btn-secondary-text:#e8ecff;
@@ -93,7 +95,7 @@ body.theme-rain {
 
 body.theme-rain-heavy {
   --bg:#0a1122; --text:#e6ebff; --muted:#939fce;
-  --card-bg:rgba(17,27,58,0.56); --card-border:rgba(47,61,116,0.68); --card-shadow:0 22px 44px rgba(0, 10, 32, 0.36);
+  --card-bg:rgba(17,27,58,0.56); --surface-solid:#111b3a; --card-border:rgba(47,61,116,0.68); --card-shadow:0 22px 44px rgba(0, 10, 32, 0.36);
   --input-bg:rgba(13,23,52,0.7); --input-border:rgba(50,64,122,0.72); --input-text:#e6ebff;
   --btn-bg:#568eff; --btn-bg2:#2662e0; --btn-text:#ffffff;
   --btn-secondary-bg:rgba(29,41,88,0.68); --btn-secondary-border:rgba(43,60,116,0.7); --btn-secondary-text:#e6ebff;
@@ -103,7 +105,7 @@ body.theme-rain-heavy {
 
 body.theme-night {
   --bg:#060b19; --text:#e6eaff; --muted:#9aa7d4;
-  --card-bg:rgba(16,27,56,0.55); --card-border:rgba(42,58,111,0.65); --card-shadow:0 20px 40px rgba(0,0,0,0.38);
+  --card-bg:rgba(16,27,56,0.55); --surface-solid:#101b38; --card-border:rgba(42,58,111,0.65); --card-shadow:0 20px 40px rgba(0,0,0,0.38);
   --input-bg:rgba(11,21,48,0.72); --input-border:rgba(47,64,117,0.75); --input-text:#e6eaff;
   --btn-bg:#5f96ff; --btn-bg2:#2f6ef0; --btn-text:#ffffff;
   --btn-secondary-bg:rgba(26,37,80,0.7); --btn-secondary-border:rgba(44,59,114,0.7); --btn-secondary-text:#e6eaff;
@@ -114,7 +116,7 @@ body.theme-night {
 /* Weekly mood themes (dominant visual wash) */
 body.theme-week-isolated {
   --bg:#f0f6ff; --text:#15325a; --muted:#5d6f91;
-  --card-bg:rgba(255,255,255,0.7); --card-border:rgba(221,230,246,0.65); --card-shadow:0 18px 34px rgba(21, 50, 90, 0.14);
+  --card-bg:rgba(255,255,255,0.7); --surface-solid:#ffffff; --card-border:rgba(221,230,246,0.65); --card-shadow:0 18px 34px rgba(21, 50, 90, 0.14);
   --input-bg:rgba(255,255,255,0.85); --input-border:rgba(214,227,248,0.8); --input-text:#15325a;
   --btn-bg:#9acbff; --btn-bg2:#5a95f2; --btn-text:#ffffff;
   --btn-secondary-bg:rgba(245,249,255,0.82); --btn-secondary-border:rgba(222,232,250,0.82); --btn-secondary-text:#15325a;
@@ -125,7 +127,7 @@ body.theme-week-isolated {
 
 body.theme-week-wet {
   --bg:#0a1226; --text:#e9ecff; --muted:#9aa5d2;
-  --card-bg:rgba(17,28,54,0.56); --card-border:rgba(47,62,108,0.68); --card-shadow:0 22px 46px rgba(0,0,0,0.4);
+  --card-bg:rgba(17,28,54,0.56); --surface-solid:#111c36; --card-border:rgba(47,62,108,0.68); --card-shadow:0 22px 46px rgba(0,0,0,0.4);
   --input-bg:rgba(14,25,51,0.72); --input-border:rgba(52,65,116,0.72); --input-text:#e9ecff;
   --btn-bg:#558dff; --btn-bg2:#245fe0; --btn-text:#ffffff;
   --btn-secondary-bg:rgba(27,40,86,0.68); --btn-secondary-border:rgba(45,59,109,0.7); --btn-secondary-text:#e9ecff;

@@ -15,11 +15,33 @@ const tempNow = el('temp-now');
 const rain6h = el('rain-6h');
 const pop24h = el('pop-24h');
 const wind = el('wind');
+const humidity = el('humidity');
+const uv = el('uv');
+const aqi = el('aqi');
+const sunrise = el('sunrise');
+const sunset = el('sunset');
 const tempLabel = el('temp-label');
 const rain6hLabel = el('rain-6h-label');
 const pop24hLabel = el('pop-24h-label');
 const windLabel = el('wind-label');
+const humidityLabel = el('humidity-label');
+const uvLabel = el('uv-label');
+const aqiLabel = el('aqi-label');
 const tz = el('tz');
+const btnNow = el('btn-now');
+const unitButtons = Array.from(document.querySelectorAll('.unit-btn'));
+const TEMP_UNITS = {
+  C: { label: '°C', name: 'Celsius' },
+  F: { label: '°F', name: 'Fahrenheit' },
+  K: { label: 'K', name: 'Kelvin' }
+};
+let tempUnit = 'C';
+try {
+  const storedUnit = localStorage.getItem('temp-unit');
+  if (TEMP_UNITS[storedUnit]) tempUnit = storedUnit;
+} catch (err) {
+  // ignore storage errors
+}
 let lastSuccessfulPlace = null;
 
 let toastTimer;
@@ -73,15 +95,29 @@ async function getForecast(lat, lon, timezone = 'auto') {
   const url = new URL('https://api.open-meteo.com/v1/forecast');
   url.searchParams.set('latitude', lat);
   url.searchParams.set('longitude', lon);
-  url.searchParams.set('current', 'temperature_2m,precipitation,wind_speed_10m');
-  url.searchParams.set('hourly', 'precipitation,precipitation_probability,temperature_2m,wind_speed_10m');
-  url.searchParams.set('daily', 'precipitation_sum,precipitation_probability_max,temperature_2m_max,temperature_2m_min');
+  url.searchParams.set('current', 'temperature_2m,precipitation,wind_speed_10m,relative_humidity_2m');
+  url.searchParams.set('hourly', 'precipitation,precipitation_probability,temperature_2m,wind_speed_10m,relative_humidity_2m,uv_index');
+  url.searchParams.set('daily', 'precipitation_sum,precipitation_probability_max,temperature_2m_max,temperature_2m_min,sunrise,sunset');
   url.searchParams.set('forecast_days', '7');
   url.searchParams.set('timezone', timezone);
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error('Falha na previsão');
   const json = await res.json();
   console.log('[forecast] success Open-Meteo');
+  return json;
+}
+
+async function getAirQuality(lat, lon, timezone = 'auto') {
+  console.log('[air] fetching', { lat, lon, timezone });
+  const url = new URL('https://air-quality-api.open-meteo.com/v1/air-quality');
+  url.searchParams.set('latitude', lat);
+  url.searchParams.set('longitude', lon);
+  url.searchParams.set('current', 'us_aqi');
+  url.searchParams.set('timezone', timezone);
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error('Falha na qualidade do ar');
+  const json = await res.json();
+  console.log('[air] success Open-Meteo');
   return json;
 }
 
@@ -110,13 +146,17 @@ const SUMMARY_LABELS = {
     temp: 'Temp. agora:',
     rain6h: 'Chuva nas próximas 6h:',
     pop24h: 'Prob. de chuva (próx. 24h):',
-    wind: 'Vento:'
+    wind: 'Vento:',
+    humidity: 'Umidade agora:',
+    uv: 'Índice UV agora:'
   },
   day: {
-    temp: 'Temp. do dia:',
+    temp: 'Temp. do dia (min/max):',
     rain6h: 'Pico de chuva (6h):',
     pop24h: 'Prob. de chuva (dia):',
-    wind: 'Vento (máx. dia):'
+    wind: 'Vento (máx. dia):',
+    humidity: 'Umidade (min/max dia):',
+    uv: 'Índice UV (min/max dia):'
   }
 };
 
@@ -126,6 +166,9 @@ function setSummaryLabels(mode) {
   if (rain6hLabel) rain6hLabel.textContent = labels.rain6h;
   if (pop24hLabel) pop24hLabel.textContent = labels.pop24h;
   if (windLabel) windLabel.textContent = labels.wind;
+  if (humidityLabel) humidityLabel.textContent = labels.humidity;
+  if (uvLabel) uvLabel.textContent = labels.uv;
+  if (aqiLabel && !aqiLabel.textContent) aqiLabel.textContent = 'IQA (US):';
 }
 
 function applyDecisionToUI(decision) {
@@ -199,9 +242,231 @@ function formatWind(ms) {
   return `${ms.toFixed(0)} km/h`;
 }
 
-function formatTempRange(min, max) {
-  if (!Number.isFinite(min) || !Number.isFinite(max)) return '—';
-  return `${min.toFixed(1)} / ${max.toFixed(1)} °C`;
+function convertTemp(value, unit) {
+  if (!Number.isFinite(value)) return null;
+  if (unit === 'F') return (value * 9) / 5 + 32;
+  if (unit === 'K') return value + 273.15;
+  return value;
+}
+
+function formatTempNumber(value, decimals = 1) {
+  const converted = convertTemp(value, tempUnit);
+  if (converted == null) return '—';
+  return converted.toFixed(decimals);
+}
+
+function formatTempValue(value, decimals = 1) {
+  const num = formatTempNumber(value, decimals);
+  if (num === '—') return '—';
+  return `${num} ${TEMP_UNITS[tempUnit].label}`;
+}
+
+function formatTempRange(min, max, decimals = 1) {
+  const minStr = formatTempNumber(min, decimals);
+  const maxStr = formatTempNumber(max, decimals);
+  if (minStr === '—' || maxStr === '—') return '—';
+  return `${minStr} / ${maxStr} ${TEMP_UNITS[tempUnit].label}`;
+}
+
+
+function formatTempRangeCompact(min, max) {
+  const minStr = formatTempNumber(min, 0);
+  const maxStr = formatTempNumber(max, 0);
+  if (minStr === '—' || maxStr === '—') return '—';
+  return `${minStr}/${maxStr}${TEMP_UNITS[tempUnit].label}`;
+}
+
+function formatPercent(value) {
+  if (!Number.isFinite(value)) return '—';
+  return `${Math.round(value)}%`;
+}
+
+function formatUV(value) {
+  if (!Number.isFinite(value)) return '—';
+  return value.toFixed(1);
+}
+
+function formatAQI(value) {
+  if (!Number.isFinite(value)) return '—';
+  return Math.round(value).toString();
+}
+
+function formatRange(minValue, maxValue, formatter) {
+  const hasMin = Number.isFinite(minValue);
+  const hasMax = Number.isFinite(maxValue);
+  if (!hasMin && !hasMax) return '—';
+  const minStr = hasMin ? formatter(minValue) : '—';
+  const maxStr = hasMax ? formatter(maxValue) : '—';
+  return `${minStr} / ${maxStr}`;
+}
+
+function classifyAqi(value) {
+  if (!Number.isFinite(value)) return null;
+  if (value <= 50) return { label: 'Bom', cls: 'good' };
+  if (value <= 100) return { label: 'Moderado', cls: 'warn' };
+  return { label: 'Ruim', cls: 'bad' };
+}
+
+function setHumidityUVText(humidityText, uvText) {
+  if (humidity) humidity.textContent = humidityText;
+  if (uv) uv.textContent = uvText;
+}
+
+function applyAirQuality(air) {
+  const value = air?.current?.us_aqi;
+  if (!aqi) return;
+  aqi.classList.remove('good', 'warn', 'bad');
+  if (!Number.isFinite(value)) {
+    aqi.textContent = '—';
+    return;
+  }
+  const category = classifyAqi(value);
+  const valueText = formatAQI(value);
+  if (category) {
+    aqi.textContent = `${valueText} • ${category.label}`;
+    aqi.classList.add(category.cls);
+  } else {
+    aqi.textContent = valueText;
+  }
+  if (aqiLabel) aqiLabel.textContent = 'IQA (US):';
+}
+
+function getCurrentHourIndex(hourly, nowIso) {
+  if (!hourly || !Array.isArray(hourly.time) || !hourly.time.length) return -1;
+  const now = new Date(nowIso);
+  let idx = hourly.time.findIndex((t) => new Date(t) >= now);
+  if (idx === -1) idx = 0;
+  return idx;
+}
+
+function formatSunTime(timeStr) {
+  if (!timeStr) return '—';
+  if (typeof timeStr === 'string') {
+    const match = timeStr.match(/T(\d{2}:\d{2})/);
+    if (match) return match[1];
+    const plain = timeStr.match(/^\d{2}:\d{2}/);
+    if (plain) return plain[0];
+  }
+  const d = new Date(timeStr);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+function setSunTimes(sunriseStr, sunsetStr) {
+  if (sunrise) sunrise.textContent = formatSunTime(sunriseStr);
+  if (sunset) sunset.textContent = formatSunTime(sunsetStr);
+}
+
+function setTempUnit(unit, { persist = true } = {}) {
+  if (!TEMP_UNITS[unit]) return;
+  tempUnit = unit;
+  unitButtons.forEach((btn) => {
+    const active = btn.dataset.unit === unit;
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+  if (persist) {
+    try {
+      localStorage.setItem('temp-unit', unit);
+    } catch (err) {
+      // ignore storage errors
+    }
+  }
+  updateTemperatureUI();
+}
+
+function updateWeekTemps(week) {
+  const container = el('week-grid');
+  if (!container || !week) return;
+  const cards = Array.from(container.children);
+  week.days.forEach((d, i) => {
+    const card = cards[i];
+    if (!card) return;
+    const tempEl = card.querySelector('.temp-range');
+    if (tempEl) tempEl.textContent = formatTempRangeCompact(d.tmin, d.tmax);
+  });
+}
+
+function updateTemperatureUI() {
+  const data = window.__lastThemeData?.raw;
+  if (!data) return;
+  const current = data.current || {};
+  const hourly = data.hourly || {};
+
+  if (window.__selectedDate) {
+    const summary = computeDaySummary(hourly, window.__selectedDate, data.daily);
+    if (summary) {
+      tempNow.textContent = formatTempRange(summary.tMin, summary.tMax);
+    } else {
+      tempNow.textContent = formatTempValue(current.temperature_2m);
+    }
+  } else {
+    tempNow.textContent = formatTempValue(current.temperature_2m);
+  }
+
+  if (window.__lastWeek) updateWeekTemps(window.__lastWeek);
+}
+
+function initTempUnitToggle() {
+  if (!unitButtons.length) return;
+  unitButtons.forEach((btn) => {
+    btn.addEventListener('click', () => setTempUnit(btn.dataset.unit));
+  });
+  setTempUnit(tempUnit, { persist: false });
+}
+
+function clearActiveDayCards() {
+  const container = el('week-grid');
+  if (!container) return;
+  Array.from(container.children).forEach(child => {
+    child.classList.remove('is-active');
+    child.setAttribute('aria-pressed', 'false');
+  });
+}
+
+function renderNowView(data, air) {
+  const current = data.current || {};
+  const hourly = data.hourly || {};
+  const daily = data.daily || {};
+  const nowIso = current.time || new Date().toISOString();
+  const decision = decideRain(hourly, nowIso);
+
+  window.__selectedDate = null;
+  setSummaryLabels('now');
+  applyDecisionToUI(decision);
+
+  tempNow.textContent = formatTempValue(current.temperature_2m);
+  wind.textContent = formatWind(current.wind_speed_10m);
+
+  const nowIdx = getCurrentHourIndex(hourly, nowIso);
+  const humidityNow = typeof current.relative_humidity_2m === 'number'
+    ? current.relative_humidity_2m
+    : (nowIdx >= 0 ? hourly.relative_humidity_2m?.[nowIdx] : null);
+  const uvNow = nowIdx >= 0 ? hourly.uv_index?.[nowIdx] : null;
+  setHumidityUVText(formatPercent(humidityNow), formatUV(uvNow));
+
+  const todayKey = nowIso.slice(0, 10);
+  const todayIdx = Array.isArray(daily.time) ? daily.time.indexOf(todayKey) : -1;
+  setSunTimes(todayIdx >= 0 ? daily.sunrise?.[todayIdx] : null, todayIdx >= 0 ? daily.sunset?.[todayIdx] : null);
+
+  applyAirQuality(air);
+  renderHourlyForecast(hourly, nowIso);
+  clearActiveDayCards();
+  setNowButtonState(true);
+}
+
+function setNowButtonState(active) {
+  if (!btnNow) return;
+  btnNow.classList.toggle('is-active', active);
+  btnNow.setAttribute('aria-pressed', active ? 'true' : 'false');
+}
+
+if (btnNow) {
+  btnNow.addEventListener('click', () => {
+    const data = window.__lastThemeData?.raw;
+    if (!data) return;
+    renderNowView(data, window.__lastAirQuality);
+  });
 }
 
 function safeMax(values) {
@@ -250,6 +515,37 @@ function computeMaxDaytimeProb(probs, times) {
   return max;
 }
 
+function resolveSunWindow(source, date) {
+  if (!source) return null;
+  const isString = (v) => typeof v === 'string' && v.length;
+  if (isString(source.sunrise) || isString(source.sunset)) {
+    return { sunrise: source.sunrise, sunset: source.sunset };
+  }
+  if (Array.isArray(source.time) || Array.isArray(source.sunrise)) {
+    const times = source.time || [];
+    const idx = times.indexOf(date);
+    if (idx < 0) return null;
+    return { sunrise: source.sunrise?.[idx], sunset: source.sunset?.[idx] };
+  }
+  return null;
+}
+
+function computeMinMaxWithinWindow(values, times, start, end) {
+  let min = null;
+  let max = null;
+  for (let i = 0; i < times.length; i++) {
+    const t = times[i];
+    if (t >= start && t <= end) {
+      const v = values[i];
+      if (typeof v === 'number' && Number.isFinite(v)) {
+        min = min === null ? v : Math.min(min, v);
+        max = max === null ? v : Math.max(max, v);
+      }
+    }
+  }
+  return { min, max };
+}
+
 function getHourlyRangeForDate(hourly, date) {
   if (!hourly || !Array.isArray(hourly.time)) return null;
   const datePrefix = `${date}T`;
@@ -262,7 +558,7 @@ function getHourlyRangeForDate(hourly, date) {
   return { startIdx, endIdx };
 }
 
-function computeDaySummary(hourly, date) {
+function computeDaySummary(hourly, date, sunData) {
   const range = getHourlyRangeForDate(hourly, date);
   if (!range) return null;
 
@@ -272,6 +568,8 @@ function computeDaySummary(hourly, date) {
   const prob = (hourly.precipitation_probability || []).slice(startIdx, endIdx);
   const temps = (hourly.temperature_2m || []).slice(startIdx, endIdx);
   const winds = (hourly.wind_speed_10m || []).slice(startIdx, endIdx);
+  const hums = (hourly.relative_humidity_2m || []).slice(startIdx, endIdx);
+  const uvs = (hourly.uv_index || []).slice(startIdx, endIdx);
 
   const sum6 = computeMaxWindowSum(precip, 6);
   const maxProb24 = safeMax(prob) ?? 0;
@@ -282,8 +580,22 @@ function computeDaySummary(hourly, date) {
   const tMin = safeMin(temps);
   const tMax = safeMax(temps);
   const windMax = safeMax(winds);
+  const humidityMin = safeMin(hums);
+  const humidityMax = safeMax(hums);
+  const sunWindow = resolveSunWindow(sunData, date);
+  let uvMin = null;
+  let uvMax = null;
+  if (sunWindow?.sunrise && sunWindow?.sunset) {
+    const start = new Date(sunWindow.sunrise);
+    const end = new Date(sunWindow.sunset);
+    if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && start <= end) {
+      const within = computeMinMaxWithinWindow(uvs, times, start, end);
+      uvMin = within.min;
+      uvMax = within.max;
+    }
+  }
 
-  return { decision, tMin, tMax, windMax };
+  return { decision, tMin, tMax, windMax, humidityMin, humidityMax, uvMin, uvMax };
 }
 
 async function runForCoords(lat, lon, name) {
@@ -293,25 +605,27 @@ async function runForCoords(lat, lon, name) {
   try {
     setStatus('Buscando previsão…');
     console.log('[run] coords', { lat, lon, name });
-    const data = await getForecast(lat, lon, 'auto');
+    const [data, air] = await Promise.all([
+      getForecast(lat, lon, 'auto'),
+      getAirQuality(lat, lon, 'auto').catch((err) => {
+        console.warn(err);
+        return null;
+      })
+    ]);
 
     const current = data.current || {};
     const hourly = data.hourly || {};
+    window.__lastAirQuality = air;
     window.__lastThemeData = { current, hourly, raw: data };
     const tzName = data.timezone || 'auto';
-    const decision = decideRain(hourly, current.time || new Date().toISOString());
+    const nowIso = current.time || new Date().toISOString();
     applyTheme(current, hourly, data);
 
     // UI
     locationName.textContent = name || `Lat ${lat.toFixed(2)}, Lon ${lon.toFixed(2)}`;
     tz.textContent = tzName;
 
-    setSummaryLabels('now');
-    applyDecisionToUI(decision);
-
-    const tNow = current.temperature_2m;
-    tempNow.textContent = typeof tNow === 'number' ? `${tNow.toFixed(1)} °C` : '—';
-    wind.textContent = formatWind(current.wind_speed_10m);
+    renderNowView(data, air);
 
 
 
@@ -319,9 +633,8 @@ async function runForCoords(lat, lon, name) {
     setStatus('');
 
     // Horas e Semana
-    const nowIso = current.time || new Date().toISOString();
-    renderHourlyForecast(hourly, nowIso);
     const week = computeWeek(data);
+    window.__lastWeek = week;
     renderWeek(week, hourly, nowIso);
     console.log('[week]', { rainyDays: week.rainyDays, summary: week.summary.verdict });
     // sinalizar que a UI está pronta para o tour
@@ -408,6 +721,7 @@ btnGeoloc.addEventListener('click', () => {
 
 // Sugestão: iniciar com uma cidade padrão (ex: São Paulo)
 window.addEventListener('load', () => {
+  initTempUnitToggle();
   runForCoords(-23.55, -46.63, 'São Paulo, BR');
   initBuiltInTour();
   renderAlgorithmExplanation();
@@ -424,6 +738,8 @@ function computeWeek(api) {
   const pMax = d.precipitation_probability_max || [];
   const tMax = d.temperature_2m_max || [];
   const tMin = d.temperature_2m_min || [];
+  const sunrises = d.sunrise || [];
+  const sunsets = d.sunset || [];
 
   const days = dates.map((date, i) => {
     const mm = pSum[i] ?? 0;
@@ -441,7 +757,9 @@ function computeWeek(api) {
       rainy,
       tmax: tMax[i],
       tmin: tMin[i],
-      conf
+      conf,
+      sunrise: sunrises[i],
+      sunset: sunsets[i]
     };
   });
 
@@ -481,10 +799,12 @@ function renderWeek(week, hourly, nowIso) {
     const label = `${d.dow}, ${formatDayMonth(d.date)}`;
     card.setAttribute('aria-label', `Ver previsão horária de ${label}`);
 
-    const daySummary = computeDaySummary(hourly, d.date);
+    const daySummary = computeDaySummary(hourly, d.date, { sunrise: d.sunrise, sunset: d.sunset });
     const emoji = daySummary?.decision?.emoji
       ? daySummary.decision.emoji
       : d.rainy ? (d.pop >= 70 || d.mm >= 5 ? '🌧️' : '🌦️') : '🌤️';
+    const humidityText = formatRange(daySummary?.humidityMin, daySummary?.humidityMax, formatPercent);
+    const uvText = formatRange(daySummary?.uvMin, daySummary?.uvMax, formatUV);
     const indicator = d.pop >= 75
       ? '<div class="rain-indicator" data-tooltip="Alta chance de chuva no dia (>= 75%)" aria-label="Alta chance de chuva no dia (>= 75%)" role="img"></div>'
       : '';
@@ -493,18 +813,33 @@ function renderWeek(week, hourly, nowIso) {
       <div class="dow">${d.dow}</div>
       <div class="date">${formatDayMonth(d.date)}</div>
       <div class="emoji">${emoji}</div>
-      <div class="mm">${d.mm} mm • ${d.pop != null ? d.pop + '%' : '—%'} • ${fmtTemp(d.tmin)}/${fmtTemp(d.tmax)}°C</div>
+      <div class="mm">${d.mm} mm • ${d.pop != null ? d.pop + '%' : '—%'}</div>
+      <div class="temp-range">${formatTempRangeCompact(d.tmin, d.tmax)}</div>
+      <div class="day-extras">
+        <div>💧 ${humidityText}</div>
+        <div>☀️ UV ${uvText}</div>
+      </div>
+      <div class="sun-times">
+        <div>🌅 ${formatSunTime(d.sunrise)}</div>
+        <div>🌇 ${formatSunTime(d.sunset)}</div>
+      </div>
       <div class="conf"><span style="width:${Math.round(d.conf*100)}%"></span></div>
     `;
 
     const activate = () => {
-      const summary = daySummary || computeDaySummary(hourly, d.date);
+      window.__selectedDate = d.date;
+      const summary = daySummary || computeDaySummary(hourly, d.date, { sunrise: d.sunrise, sunset: d.sunset });
       if (summary) {
         setSummaryLabels('day');
         applyDecisionToUI(summary.decision);
         tempNow.textContent = formatTempRange(summary.tMin, summary.tMax);
         wind.textContent = formatWind(summary.windMax);
+        const dayHumidity = formatRange(summary.humidityMin, summary.humidityMax, formatPercent);
+        const dayUv = formatRange(summary.uvMin, summary.uvMax, formatUV);
+        setHumidityUVText(dayHumidity, dayUv);
       }
+      setSunTimes(d.sunrise, d.sunset);
+      setNowButtonState(false);
       renderHourlyForecast(hourly, nowIso, { date: d.date, title: `Previsão horária — ${label}` });
       setActiveCard(card);
     };
@@ -527,7 +862,6 @@ function formatDayMonth(dateStr) {
   return d.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' });
 }
 
-function fmtTemp(v){ return (v==null? '—' : Math.round(v)); }
 
 function renderHourlyForecast(hourly, nowIso, opts = {}) {
   const container = el('hourly-ruler-content');
