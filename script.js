@@ -122,6 +122,7 @@ async function getAirQuality(lat, lon, timezone = 'auto') {
 }
 
 // Decide: vai chover?
+const RAIN_NOW_THRESHOLD = 0.1; // mm na última hora
 const ALGORITHM_CONFIG = {
   v2: {
     name: 'Sistema de Pontos',
@@ -230,6 +231,30 @@ function decideRain(hourly, nowIso) {
   const decision = buildDecision({ sum6, maxProb24, maxPrecip6, maxProbDaytime });
   console.log('[rain-score]', { score: decision.score, maxProb24, sum6, maxPrecip6, maxProbDaytime });
   return decision;
+}
+
+function detectRainNow(current, hourly, nowIso) {
+  const currentPrecip = current?.precipitation;
+  if (Number.isFinite(currentPrecip) && currentPrecip > RAIN_NOW_THRESHOLD) {
+    return { isRaining: true, amount: currentPrecip };
+  }
+  const idx = getCurrentHourIndex(hourly, nowIso);
+  const hourlyPrecip = idx >= 0 ? hourly?.precipitation?.[idx] : null;
+  if (Number.isFinite(hourlyPrecip) && hourlyPrecip > RAIN_NOW_THRESHOLD) {
+    return { isRaining: true, amount: hourlyPrecip };
+  }
+  return { isRaining: false, amount: null };
+}
+
+function applyRainNowOverride(decision, current, hourly, nowIso) {
+  const rainNow = detectRainNow(current, hourly, nowIso);
+  if (!rainNow.isRaining) return decision;
+  return {
+    ...decision,
+    verdict: 'Chovendo agora',
+    emoji: '🌧️',
+    cls: 'bad'
+  };
 }
 
 function rangeSlice(arr, start, end) {
@@ -429,7 +454,8 @@ function renderNowView(data, air) {
   const hourly = data.hourly || {};
   const daily = data.daily || {};
   const nowIso = current.time || new Date().toISOString();
-  const decision = decideRain(hourly, nowIso);
+  let decision = decideRain(hourly, nowIso);
+  decision = applyRainNowOverride(decision, current, hourly, nowIso);
 
   window.__selectedDate = null;
   setSummaryLabels('now');
@@ -1101,16 +1127,19 @@ function initBuiltInTour(){
 
   const makeSteps = () => {
     const steps = [];
-    if (qs('.guide-btn')) steps.push({ element: '.guide-btn', text: 'O botão "Guia interativo" fica sempre aqui. Clique novamente quando quiser rever o passo a passo.' });
-    if (qs('#query')) steps.push({ element: '#query', text: 'Pesquise uma cidade ou endereço. O autocomplete sugere resultados conforme você digita.' });
-    if (qs('#btn-geoloc')) steps.push({ element: '#btn-geoloc', text: 'Prefere rapidez? Use sua localização atual (o navegador vai pedir permissão).' });
-    if (qs('#status')) steps.push({ element: '#status', text: 'A linha de status indica carregamento, erros e dicas durante a busca.' });
-    if (qs('#result')) steps.push({ element: '#result', text: 'Aqui está a resposta “vai chover?”, além da temperatura, vento e acumulados das próximas horas.' });
-    if (qs('details')) steps.push({ element: 'details', text: 'Abra "Ver detalhes horários" para inspecionar o JSON bruto com todos os horários.', onShow: () => { const d = qs('details'); if (d) d.open = true; } });
-    if (qs('#week-summary')) steps.push({ element: '#week-summary', text: 'O resumo semanal conta quantos dias têm chuva e entrega o veredito da semana.' });
-    if (qs('#week-theme-label')) steps.push({ element: '#week-theme-label', text: 'Este rótulo mostra o tema visual aplicado conforme o clima predominante.' });
-    if (qs('#week-grid')) steps.push({ element: '#week-grid', text: 'Cada cartão diário traz emoji de tempo, precipitação, probabilidade e barra de confiança.' });
-    if (qs('.footer-surface')) steps.push({ element: '.footer-surface', text: 'No rodapé você encontra links das APIs, dicas rápidas e badges sobre a proposta do app.' });
+    if (qs('.guide-btn')) steps.push({ element: '.guide-btn', text: 'Este guia te acompanha pelo app. Você pode reabrir quando quiser para revisar os recursos.' });
+    if (qs('#query')) steps.push({ element: '#query', text: 'Digite uma cidade ou endereço e escolha uma sugestão para buscar a previsão completa.' });
+    if (qs('#btn-geoloc')) steps.push({ element: '#btn-geoloc', text: 'Clique aqui para usar sua localização atual e acelerar a busca (o navegador pedirá permissão).' });
+    if (qs('#result')) steps.push({ element: '#result', text: 'Aqui aparece o veredito “vai chover?”, com dados atuais, próximos horários e o panorama da semana.' });
+    if (qs('#btn-now')) steps.push({ element: '#btn-now', text: 'Depois de clicar em um dia específico, use “Agora” para voltar ao resumo do momento atual.' });
+    if (qs('.unit-toggle')) steps.push({ element: '.unit-toggle', text: 'Alterne a unidade de temperatura: °C, K ou °F. A escolha fica salva no navegador.' });
+    if (qs('#humidity-label')) steps.push({ element: '#humidity-label', text: 'Umidade indica quanta água existe no ar. Valores altos costumam aumentar a sensação de abafamento.' });
+    if (qs('#uv-label')) steps.push({ element: '#uv-label', text: 'Índice UV mede a intensidade do sol. Use protetor quando estiver alto. Min/max consideram nascer/pôr do sol.' });
+    if (qs('#aqi-label')) steps.push({ element: '#aqi-label', text: 'IQA (US) resume a qualidade do ar: bom, moderado ou ruim conforme o valor atual.' });
+    if (qs('#week-summary')) steps.push({ element: '#week-summary', text: 'Resumo semanal: conta quantos dias têm chuva e entrega o veredito da semana.' });
+    if (qs('#week-theme-label')) steps.push({ element: '#week-theme-label', text: 'Este rótulo mostra o tema visual aplicado conforme o clima predominante da semana.' });
+    if (qs('#week-grid')) steps.push({ element: '#week-grid', text: 'Cada cartão diário mostra precipitação, probabilidade, faixa de temperatura, umidade, UV e nascer/pôr do sol.' });
+    if (qs('.footer-surface')) steps.push({ element: '.footer-surface', text: 'No rodapé você encontra links das APIs, dicas rápidas e a explicação do algoritmo.' });
     return steps.filter(s => !s.element || qs(s.element));
   };
 
